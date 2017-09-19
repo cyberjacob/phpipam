@@ -15,6 +15,8 @@ $Result 	= new Result ();
 
 # verify that user is logged in
 $User->check_user_session();
+# check maintaneance mode
+$User->check_maintaneance_mode ();
 
 # strip input tags
 $_POST = $Admin->strip_input_tags($_POST);
@@ -37,4 +39,6 @@ $values = array("tid"=>@$_POST['tid'],
 if(!$Admin->object_modify("deviceTypes", $_POST['action'], "tid", $values)) 	{ $Result->show("danger",  _("Failed to $_POST[action] device type").'!', false); }
 else 																			{ $Result->show("success", _("Device type $_POST[action] successfull").'!', false); }
 
-?>
+if($_POST['action']=="delete") {
+    $Admin->remove_object_references ("devices", "type", $values["tid"]);
+}

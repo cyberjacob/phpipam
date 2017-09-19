@@ -154,6 +154,17 @@ if($User->user->authMethod == 1) {
 	</td>
 </tr>
 
+<!-- Compress text in menu -->
+<tr>
+	<td class="title"><?php print _('Compress text in top menu'); ?></td>
+	<td>
+		<input type="checkbox" value="1" class="input-switch" name="menuCompact" <?php if($User->user->menuCompact == 1) print 'checked'; ?>>
+	</td>
+	<td class="info2">
+		<?php print _('Do not show text next to menu items in dynamic menu'); ?>
+	</td>
+</tr>
+
 <!-- Menu type -->
 <tr>
 	<td class="title"><?php print _('Menu Type'); ?></td>
@@ -201,7 +212,7 @@ if($User->user->authMethod == 1) {
 <span class="info2"><?php print _("Select widgets to be displayed on dashboard"); ?></span>
 
 
-<script type="text/javascript" src="js/1.2/jquery-ui-1.10.3.custom.min.js"></script>
+<script type="text/javascript" src="js/<?php print SCRIPT_PREFIX; ?>/jquery-ui-1.10.4.custom.min.js"></script>
 <script>
 $(document).ready(function() {
 	// initialize sortable

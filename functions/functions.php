@@ -1,13 +1,14 @@
 <?php
 
 /* @config file ------------------ */
-require( dirname(__FILE__) . '/../config.php' );
+require_once( dirname(__FILE__) . '/../config.php' );
 
 /* @http only cookies ------------------- */
 ini_set('session.cookie_httponly', 1);
 
 /* @debugging functions ------------------- */
 ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
 if (!$debugging) { error_reporting(E_ERROR ^ E_WARNING); }
 else			 { error_reporting(E_ALL ^ E_NOTICE ^ E_STRICT); }
 
@@ -24,6 +25,9 @@ if(!defined('BASE')) {
 	$root = substr($_SERVER['DOCUMENT_ROOT'],-1)=="/" ? substr($_SERVER['DOCUMENT_ROOT'],0,-1) : $_SERVER['DOCUMENT_ROOT'];	// fix for missing / in some environments
 	define('BASE', substr(str_replace($root, "", dirname(__FILE__)),0,-9));
 }
+
+// Fix JSON_UNESCAPED_UNICODE for PHP 5.3
+defined('JSON_UNESCAPED_UNICODE') or define('JSON_UNESCAPED_UNICODE', 256);	
 
 /* @classes ---------------------- */
 require( dirname(__FILE__) . '/classes/class.Common.php' );		//Class common - common functions
@@ -47,14 +51,18 @@ require( dirname(__FILE__) . '/classes/class.SNMP.php' );	    //Class for SNMP q
 require( dirname(__FILE__) . '/classes/class.DHCP.php' );	    //Class for DHCP
 
 # save settings to constant
-if($_GET['page']!="install" ) {
+if(@$_GET['page']!="install" ) {
 	# database object
 	$Database 	= new Database_PDO;
 	# try to fetch settings
 	try { $settings = $Database->getObject("settings", 1); }
 	catch (Exception $e) { $settings = false; }
 	if ($settings!==false) {
-		define(SETTINGS, json_encode($settings));
+		if (phpversion() < "5.4") {
+			define(SETTINGS, json_encode($settings));
+		}else{
+			define(SETTINGS, json_encode($settings, JSON_UNESCAPED_UNICODE));
+		}
 	}
 }
 
@@ -73,7 +81,7 @@ function create_link ($l0 = null, $l1 = null, $l2 = null, $l3 = null, $l4 = null
 	$el = array("page", "section", "subnetId", "sPage", "ipaddrid", "tab");
 	// override for search
 	if ($l0=="tools" && $l1=="search")
-    $el = array("page", "section", "addresses", "subnets", "vlans", "ip");
+    $el = array("page", "section", "ip", "addresses", "subnets", "vlans", "ip");
 
 	# set rewrite
 	if($User->settings->prettyLinks=="Yes") {
@@ -111,5 +119,3 @@ function create_link ($l0 = null, $l1 = null, $l2 = null, $l3 = null, $l4 = null
 
 /* get version */
 include('version.php');
-
-?>

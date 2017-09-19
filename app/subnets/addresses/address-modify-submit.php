@@ -21,9 +21,16 @@ $Ping		= new Scan ($Database);
 
 # verify that user is logged in
 $User->check_user_session();
+# check maintaneance mode
+$User->check_maintaneance_mode ();
 
 # validate csrf cookie
-$User->csrf_cookie ("validate", "address", $_POST['csrf_cookie']) === false ? $Result->show("danger", _("Invalid CSRF cookie"), true) : "";
+if($_POST['action']=="add") {
+	$User->csrf_cookie ("validate", "address_add", $_POST['csrf_cookie']) === false ? $Result->show("danger", _("Invalid CSRF cookie"), true) : "";
+}
+else {
+	$User->csrf_cookie ("validate", "address_".$_POST['id'], $_POST['csrf_cookie']) === false ? $Result->show("danger", _("Invalid CSRF cookie"), true) : "";
+}
 
 # validate action
 $Tools->validate_action ($_POST['action']);
@@ -35,6 +42,9 @@ if(isset($_POST['action-visual'])) {
 
 # save $_POST to $address
 $address = $_POST;
+
+# remove all spaces in dns_name
+if (strlen($address['dns_name'])>0) { $address['dns_name'] = str_replace(" ", "", $address['dns_name']); }
 
 # required fields
 isset($address['action']) ?:		$Result->show("danger", _("Missing required fields"). " action", true);
@@ -202,14 +212,18 @@ if (strlen(strstr($address['ip_addr'],"-")) > 0) {
             	}
         	}
 
-			# modify action - if delete ok, dynamically reset add / edit -> if IP already exists set edit
-			if($action != "delete") {
-				$address['action'] = $Addresses->address_exists ($m, $address['subnetId'])===true ? "edit" : "add";
+
+			# if it already exist for add skip it !
+			if($Addresses->address_exists ($m, $address['subnetId']) && $action=="add") {
+				# Add Warnings if it exists
+				$Result->show("warning", _('IP address')." ".$Addresses->transform_address($m, "dotted")." "._('already existing in selected network').'!', false);
 			}
-			# if it fails set error log
-			if (!$Addresses->modify_address($address, false)) {
-		        $errors[] = _('Cannot').' '. $address['action']. ' '._('IP address').' '. $Addresses->transform_to_dotted($m);
-		    }
+			else {
+				# if it fails set error log
+				if (!$Addresses->modify_address($address, false)) {
+			        $errors[] = _('Cannot').' '. $address['action']. ' '._('IP address').' '. $Addresses->transform_to_dotted($m);
+			    }
+			}
 			# next IP
 			$m = gmp_strval(gmp_add($m,1));
 		}
@@ -251,6 +265,7 @@ else {
 	# validate and normalize MAC address
 	if($action!=="delete") {
     	if(strlen(@$address['mac'])>0) {
+    		$address['mac'] = trim($address['mac']);
         	if($User->validate_mac ($address['mac'])===false) {
             	$Result->show("danger", _('Invalid MAC address')."!", true);
         	}
@@ -267,8 +282,12 @@ else {
 		$address['ip_addr'] = $address_old['ip'];
 	}
 	# verify address
-	if($action!=="delete" && $subnet['isFolder']!="1")
-	$verify = $Addresses->verify_address( $address['ip_addr'], "$subnet[ip]/$subnet[mask]", $not_strict );
+	if($action!=="delete" && $subnet['isFolder']!="1") {
+		$verify = $Addresses->verify_address( $address['ip_addr'], "$subnet[ip]/$subnet[mask]", $not_strict );
+	}
+	elseif ($action!=="delete" && $subnet['isFolder']=="1") {
+		$verify = $Addresses->verify_address( $address['ip_addr'], "0.0.0.0/0", $not_strict );
+	}
 
 	# if errors are present print them, else execute query!
 	if($verify) 				{ $Result->show("danger", _('Error').": $verify ($address[ip_addr])", true); }
@@ -338,4 +357,3 @@ else {
 		}
 	}
 }
-?>

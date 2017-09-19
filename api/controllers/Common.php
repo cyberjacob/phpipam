@@ -118,6 +118,14 @@ class Common_api_functions {
 	 */
 	protected $Subnets;
 
+	/**
+	 * App object - will be passed by index.php
+	 * to provide app detauls
+	 *
+	 * @var false|object
+	 */
+	public $app = false;
+
 
 
 
@@ -201,9 +209,16 @@ class Common_api_functions {
 
 		// links
 		if($links) {
-			// explicitly set to no
-			if(@$this->_params->links!="false")
+			// if parameter is set obey
+			if(isset($this->_params->links)) {
+				if($this->_params->links!="false")
 								{ $result = $this->add_links ($result, $controller); }
+			}
+			// otherwise take defaults
+			else {
+				if($this->app->app_show_links==1)
+								{ $result = $this->add_links ($result, $controller); }
+			}
 		}
 		// filter
 		if (isset($this->_params->filter_by)) {
@@ -229,10 +244,10 @@ class Common_api_functions {
 	 *	parameters: filter_by, filter_value
 	 *
 	 * @access protected
-	 * @param mixed $result
+	 * @param array $result
 	 * @return void
 	 */
-	protected function filter_result ($result) {
+	protected function filter_result ($result = array ()) {
     	// remap keys before applying filter
     	$result = $this->remap_keys ($result, false);
 		// validate
@@ -341,12 +356,15 @@ class Common_api_functions {
 				// custom links
 				$custom_links = $this->define_links ($controller);
 				if($custom_links!==false) {
-					foreach($this->define_links ($controller) as $link=>$method) {
-						// self only !
-						if ($link=="self") {
-						$result[$k]->links[$m] = new stdClass ();
-						$result[$k]->links[$m]->rel  	= $link;
-						$result[$k]->links[$m]->href 	= "/api/".$this->_params->app_id."/$controller/".$r->id."/";
+					$links_arr = $this->define_links ($controller);
+					if(is_array($links_arr)) {
+						foreach($this->define_links ($controller) as $link=>$method) {
+							// self only !
+							if ($link=="self") {
+							$result[$k]->links[$m] = new stdClass ();
+							$result[$k]->links[$m]->rel  	= $link;
+							$result[$k]->links[$m]->href 	= "/api/".$this->_params->app_id."/$controller/".$r->id."/";
+							}
 						}
 					}
 				}
@@ -368,17 +386,20 @@ class Common_api_functions {
 				// custom links
 				$custom_links = $this->define_links ($controller);
 				if($custom_links!==false) {
-					foreach($this->define_links ($controller) as $link=>$method) {
-						$result->links[$m] = new stdClass ();
-						$result->links[$m]->rel  	= $link;
-						// self ?
-						if ($link=="self")
-						$result->links[$m]->href 	= "/api/".$this->_params->app_id."/$controller/".$result->id."/";
-						else
-						$result->links[$m]->href 	= "/api/".$this->_params->app_id."/$controller/".$result->id."/$link/";
-						$result->links[$m]->methods = $method;
-						// next
-						$m++;
+					$links_arr = $this->define_links ($controller);
+					if(is_array($links_arr)) {
+						foreach($this->define_links ($controller) as $link=>$method) {
+							$result->links[$m] = new stdClass ();
+							$result->links[$m]->rel  	= $link;
+							// self ?
+							if ($link=="self")
+							$result->links[$m]->href 	= "/api/".$this->_params->app_id."/$controller/".$result->id."/";
+							else
+							$result->links[$m]->href 	= "/api/".$this->_params->app_id."/$controller/".$result->id."/$link/";
+							$result->links[$m]->methods = $method;
+							// next
+							$m++;
+						}
 					}
 				}
 
@@ -593,10 +614,10 @@ class Common_api_functions {
 	public function validate_mac ($mac) {
     	// first put it to common format (1)
     	$mac = $this->reformat_mac_address ($mac);
-    	// we permit empty
-        if (strlen($mac)==0)                                                            { return true; }
-    	elseif (preg_match('/^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/', $mac) != 1)   { return false; }
-    	else                                                                            { return true; }
+    	// init common class
+    	$Common = new Common_functions;
+    	// check
+    	return $Common->validate_mac ($mac);
 	}
 
 	/**
@@ -735,6 +756,12 @@ class Common_api_functions {
 		if($this->_params->controller=="tools" && $this->_params->id=="deviceTypes")  { $this->keys['tid'] = "id"; }
 		if($this->_params->controller=="tools" && $this->_params->id=="nameservers")  { $this->keys['permissions'] = "sections"; }
 
+		// special keys for POST / PATCH
+		if ($_SERVER['REQUEST_METHOD']=="POST" || $_SERVER['REQUEST_METHOD']=="PATCH") {
+		if($this->_params->controller=="tools" && $this->_params->id=="devices")  	  { $this->keys['hostname'] = "dns_name"; }
+		if($this->_params->controller=="devices" )  	  							  { $this->keys['hostname'] = "dns_name"; }
+		}
+
 		// POST / PATCH
 		if ($_SERVER['REQUEST_METHOD']=="POST" || $_SERVER['REQUEST_METHOD']=="PATCH")		{ return $this->remap_update_keys (); }
 		// GET
@@ -773,14 +800,16 @@ class Common_api_functions {
 			// params
 			$result_remapped = new StdClass ();
 			// search and replace
-			foreach($result as $k=>$v) {
-				if(array_key_exists($k, $this->keys)) {
-					// replace
-					$key = $this->keys[$k];
-					$result_remapped->{$key} = $v;
-				}
-				else {
-					$result_remapped->{$k} = $v;
+			if(is_array($result) || is_object($result)) {
+				foreach($result as $k=>$v) {
+					if(array_key_exists($k, $this->keys)) {
+						// replace
+						$key = $this->keys[$k];
+						$result_remapped->{$key} = $v;
+					}
+					else {
+						$result_remapped->{$k} = $v;
+					}
 				}
 			}
 		}
@@ -954,6 +983,28 @@ class Common_api_functions {
     	}
 	}
 
+	/**
+	* Unmarshal nested custom field data into the root object, and unset
+	* the custom_fields parameter when done. This function does not have
+	* any effect on requests for controllers that don't have custom fields,
+	* or if the app_nest_custom_fields setting is not enabled.
+	*
+	* @access public
+	* @return void
+	*/
+	public function unmarshal_nested_custom_fields() {
+		if (!$this->app->app_nest_custom_fields) {
+			return;
+		}
+		if (is_array($this->_params->custom_fields) && isset($this->custom_fields)) {
+			foreach ($this->_params->custom_fields as $key => $value) {
+				if (array_key_exists($key, $this->custom_fields)) {
+					$this->_params->$key = $value;
+				} else {
+					$this->Response->throw_exception(400, "${key} is not a valid custom field");
+				}
+			}
+			unset($this->_params->custom_fields);
+		}
+	}
 }
-
-?>

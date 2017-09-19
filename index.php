@@ -39,6 +39,8 @@ elseif($_GET['page']=="login")		{ require("app/login/index.php"); }
 elseif($_GET['page']=="temp_share")	{ require("app/temp_share/index.php"); }
 elseif($_GET['page']=="request_ip")	{ require("app/login/index.php"); }
 elseif($_GET['page']=="opensearch")	{ require("app/tools/search/opensearch.php"); }
+elseif($_GET['page']=="saml2")      { require("app/saml2/index.php"); }
+elseif($_GET['page']=="saml2-idp")  { require("app/saml2/idp.php"); }
 else {
 	# verify that user is logged in
 	$User->check_user_session();
@@ -83,47 +85,44 @@ else {
 	<link rel="search" type="application/opensearchdescription+xml" href="/?page=opensearch" title="Search <?php print $User->settings->siteTitle; ?>">
 
 	<!-- css -->
-	<link rel="shortcut icon" type="image/png" href="css/1.2/images/favicon.png">
-	<link rel="stylesheet" type="text/css" href="css/1.2/bootstrap/bootstrap.min.css">
-	<link rel="stylesheet" type="text/css" href="css/1.2/bootstrap/bootstrap-custom.css">
-	<link rel="stylesheet" type="text/css" href="css/1.2/font-awesome/font-awesome.min.css">
-	<link rel="stylesheet" type="text/css" href="css/1.2/bootstrap/bootstrap-switch.min.css">
+	<link rel="shortcut icon" type="image/png" href="css/<?php print SCRIPT_PREFIX; ?>/images/favicon.png">
+	<link rel="stylesheet" type="text/css" href="css/<?php print SCRIPT_PREFIX; ?>/bootstrap/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="css/<?php print SCRIPT_PREFIX; ?>/bootstrap/bootstrap-custom.css">
+	<link rel="stylesheet" type="text/css" href="css/<?php print SCRIPT_PREFIX; ?>/font-awesome/font-awesome.min.css">
+	<link rel="stylesheet" type="text/css" href="css/<?php print SCRIPT_PREFIX; ?>/bootstrap/bootstrap-switch.min.css">
+	<?php if ($User->settings->enableThreshold=="1") { ?>
+	<link rel="stylesheet" type="text/css" href="css/<?php print SCRIPT_PREFIX; ?>/slider.css">
+	<?php } ?>
 
 	<!-- js -->
-	<script type="text/javascript" src="js/1.2/jquery-2.1.3.min.js"></script>
-	<script type="text/javascript" src="js/1.2/jclock.jquery.js"></script>
+	<script type="text/javascript" src="js/<?php print SCRIPT_PREFIX; ?>/jquery-3.1.1.min.js"></script>
+	<script type="text/javascript" src="js/<?php print SCRIPT_PREFIX; ?>/jclock.jquery.js"></script>
 	<?php if($_GET['page']=="login" || $_GET['page']=="request_ip") { ?>
-	<script type="text/javascript" src="js/1.2/login.js"></script>
+	<script type="text/javascript" src="js/<?php print SCRIPT_PREFIX; ?>/login.js"></script>
 	<?php } ?>
-	<script type="text/javascript" src="js/1.2/magic.js"></script>
-	<script type="text/javascript" src="js/1.2/bootstrap.min.js"></script>
-	<script type="text/javascript" src="js/1.2/jquery-ui-1.10.4.custom.min.js"></script>
-	<script type="text/javascript" src="js/1.2/bootstrap-switch.min.js"></script>
-	<script type="text/javascript" src="js/1.2/bdt/jquery.sortelements.js"></script>
-	<script type="text/javascript" src="js/1.2/bdt/jquery.bdt.js"></script>
-	<script type="text/javascript" src="js/1.2/stickytableheaders/jquery.stickytableheaders.min.js"></script>
+	<script type="text/javascript" src="js/<?php print SCRIPT_PREFIX; ?>/magic.js"></script>
+	<script type="text/javascript" src="js/<?php print SCRIPT_PREFIX; ?>/bootstrap.min.js"></script>
+	<script type="text/javascript" src="js/<?php print SCRIPT_PREFIX; ?>/jquery-ui-1.10.4.custom.min.js"></script>
+	<script type="text/javascript" src="js/<?php print SCRIPT_PREFIX; ?>/bootstrap-switch.min.js"></script>
+	<script type="text/javascript" src="js/<?php print SCRIPT_PREFIX; ?>/bdt/jquery.sortelements.js"></script>
+	<script type="text/javascript" src="js/<?php print SCRIPT_PREFIX; ?>/bdt/jquery.bdt.js"></script>
+	<script type="text/javascript" src="js/<?php print SCRIPT_PREFIX; ?>/stickytableheaders/jquery.stickytableheaders.min.js"></script>
 	<script type="text/javascript">
 	$(document).ready(function(){
 	     if ($("[rel=tooltip]").length) { $("[rel=tooltip]").tooltip(); }
 	});
 	</script>
 	<?php if ($User->settings->enableThreshold=="1") { ?>
-	<link rel="stylesheet" type="text/css" href="css/1.2/slider.css">
-	<script type="text/javascript" src="js/1.2/bootstrap-slider.js"></script>
-    <?php }	?>
+	<script type="text/javascript" src="js/<?php print SCRIPT_PREFIX; ?>/bootstrap-slider.js"></script>
+	<?php }	?>
 	<!--[if lt IE 9]>
-	<script type="text/javascript" src="js/1.2/dieIE.js"></script>
+	<script type="text/javascript" src="js/<?php print SCRIPT_PREFIX; ?>/dieIE.js"></script>
 	<![endif]-->
-    <?php if ($User->settings->enableLocations=="1") { ?>
-    <?php
-    # API key check
-    if(isset($gmaps_api_key)) {
-        $key = strlen($gmaps_api_key)>0 ? "?key=".$gmaps_api_key : "";
-    }
-    ?>
-    <script type="text/javascript" src="https://maps.google.com/maps/api/js<?php print $key; ?>"></script>
-    <script type="text/javascript" src="js/1.2/gmaps.js"></script>
-    <?php }	?>
+	<?php if ($User->settings->enableLocations=="1" && isset($gmaps_api_key) && strlen($gmaps_api_key)>0) { ?>
+	<script type="text/javascript" src="https://maps.google.com/maps/api/js<?php print "?key=".$gmaps_api_key; ?>"></script>
+	<script type="text/javascript" src="js/<?php print SCRIPT_PREFIX; ?>/gmaps.js"></script>
+	<?php }	?>
+
 </head>
 
 <!-- body -->
@@ -163,8 +162,10 @@ else {
     <!-- logo -->
 	<div class="col-lg-3 col-md-3 col-sm-12 col-xs-12">
     <?php
-	if(file_exists( dirname(__FILE__)."/css/1.2/images/logo/logo.png")) {
-    	print "<img style='width:220px;margin:10px;margin-top:20px;' src='css/1.2/images/logo/logo.png'>";
+	if(file_exists( dirname(__FILE__)."/css/".SCRIPT_PREFIX."/images/logo/logo.png")) {
+		// set width
+		$logo_width = isset($config['logo_width']) ? $config['logo_width'] : 220;
+    	print "<img style='max-width:".$logo_width."px;margin:10px;margin-top:20px;' src='css/".SCRIPT_PREFIX."/images/logo/logo.png'>";
 	}
     ?>
 	</div>
@@ -189,6 +190,11 @@ else {
 	</div>
 </div>
 
+<!-- maintaneance mode -->
+<?php
+$text_append_maint = $User->is_admin(false) ? " <btn class='removeMaintaneance btn btn-xs btn-default'>"._("Remove")."</btn>" : "";
+if($User->settings->maintaneanceMode == "1") { $Result->show("warning text-center nomargin", "<i class='fa fa-info'></i> "._("System is running in maintenance mode")." !".$text_append_maint, false); }
+?>
 
 <!-- page sections / menu -->
 <div class="content">
@@ -202,7 +208,6 @@ else {
 <div class="content_overlay">
 <div class="container-fluid" id="mainContainer">
 		<?php
-
 		/* error */
 		if($_GET['page'] == "error") {
 			print "<div id='error' class='container'>";
@@ -334,6 +339,7 @@ else {
 
 <!-- export div -->
 <div class="exportDIV"></div>
+
 
 <!-- end body -->
 </body>

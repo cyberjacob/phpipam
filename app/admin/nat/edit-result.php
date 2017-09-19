@@ -11,6 +11,8 @@ $Result 	= new Result ();
 
 # verify that user is logged in
 $User->check_user_session();
+# check maintaneance mode
+$User->check_maintaneance_mode ();
 
 # strip input tags
 $_POST = $Admin->strip_input_tags($_POST);
@@ -52,4 +54,3 @@ else																 { $Result->show("success", _("NAT $_POST[action] successful
 if($_POST['action']=="add") {
     print "<div class='new_nat_id hidden'>$Admin->lastId</div>";
 }
-?>

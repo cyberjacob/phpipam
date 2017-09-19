@@ -694,3 +694,169 @@ ALTER TABLE `usersAuthMethod` CHANGE `type` `type` SET('local','AD','LDAP','NetI
 ALTER TABLE `api` ADD `app_lock` INT(1)  NOT NULL  DEFAULT '0';
 ALTER TABLE `api` ADD `app_lock_wait` INT(4)  NOT NULL  DEFAULT '30';
 
+
+
+
+/* VERSION 1.27 */
+UPDATE `settings` set `version` = '1.27';
+
+/* reset db check field and donation */
+UPDATE `settings` set `dbverified` = 0;
+UPDATE `settings` set `donate` = 0;
+
+/* ad show supernet only */
+ALTER TABLE `sections` ADD `showSupernetOnly` INT(1)  NULL  DEFAULT '0';
+
+/* add scan and discovery check time to database */
+ALTER TABLE `subnets` ADD `lastScan` TIMESTAMP  NULL;
+ALTER TABLE `subnets` ADD `lastDiscovery` TIMESTAMP  NULL;
+
+
+
+/* VERSION 1.28 */
+UPDATE `settings` set `version` = '1.28';
+
+/* reset db check field and donation */
+UPDATE `settings` set `dbverified` = 0;
+UPDATE `settings` set `donate` = 0;
+
+/* Extend username to 255 chars for LDAP logins */
+ALTER TABLE `users` CHANGE `username` `username` VARCHAR(255)  CHARACTER SET utf8  NOT NULL  DEFAULT '';
+ALTER TABLE `logs` CHANGE `username` `username` VARCHAR(255)  CHARACTER SET utf8  NULL  DEFAULT NULL;
+
+/* expand hostname valude in IP requests to match ipaddresses table */
+ALTER TABLE `requests` CHANGE `dns_name` `dns_name` VARCHAR(100)  CHARACTER SET utf8  NULL  DEFAULT NULL;
+ALTER TABLE `requests` CHANGE `description` `description` VARCHAR(64)  CHARACTER SET utf8  NULL  DEFAULT NULL;
+
+/* update Tags when state change occurs */
+ALTER TABLE `settings` ADD `updateTags` TINYINT(1)  NULL  DEFAULT '0';
+ALTER TABLE `ipTags` ADD `updateTag` TINYINT(1)  NULL  DEFAULT '0';
+
+UPDATE `ipTags` set `updateTag`=1 where `id`=1;
+UPDATE `ipTags` set `updateTag`=1 where `id`=2;
+UPDATE `ipTags` set `updateTag`=1 where `id`=3;
+UPDATE `ipTags` set `updateTag`=1 where `id`=4;
+
+
+
+/* VERSION 1.29 */
+UPDATE `settings` set `version` = '1.29';
+
+/* reset db check field and donation */
+UPDATE `settings` set `dbverified` = 0;
+UPDATE `settings` set `donate` = 0;
+
+/* Add maintaneanceMode identifier */
+ALTER TABLE `settings` ADD `maintaneanceMode` TINYINT(1)  NULL  DEFAULT '0';
+/* extend pingStatus intervals */
+ALTER TABLE `settings` CHANGE `pingStatus` `pingStatus` VARCHAR(32)  CHARACTER SET utf8  NOT NULL  DEFAULT '1800;3600';
+ALTER TABLE `settings` CHANGE `hiddenCustomFields` `hiddenCustomFields` TEXT  CHARACTER SET utf8  NULL;
+
+
+
+/* VERSION 1.30 */
+UPDATE `settings` set `version` = '1.3';
+
+/* reset db check field and donation */
+UPDATE `settings` set `dbverified` = 0;
+UPDATE `settings` set `donate` = 0;
+
+/* add option to globally enforce uniqueness */
+ALTER TABLE `settings` ADD `enforceUnique` TINYINT(1)  NULL  DEFAULT '1';
+UPDATE `subnets` set `vrfId` = 0 WHERE `vrfId` IS NULL;
+
+/* update languges */
+UPDATE `lang` SET `l_code` = 'en_GB.UTF-8' WHERE `l_code` = 'en_GB.UTF8';
+UPDATE `lang` SET `l_code` = 'sl_SI.UTF-8' WHERE `l_code` = 'sl_SI.UTF8';
+UPDATE `lang` SET `l_code` = 'fr_FR.UTF-8' WHERE `l_code` = 'fr_FR.UTF8';
+UPDATE `lang` SET `l_code` = 'nl_NL.UTF-8' WHERE `l_code` = 'nl_NL.UTF8';
+UPDATE `lang` SET `l_code` = 'de_DE.UTF-8' WHERE `l_code` = 'de_DE.UTF8';
+UPDATE `lang` SET `l_code` = 'pt_BR.UTF-8' WHERE `l_code` = 'pt_BR.UTF8';
+UPDATE `lang` SET `l_code` = 'es_ES.UTF-8' WHERE `l_code` = 'es_ES.UTF8';
+UPDATE `lang` SET `l_code` = 'cs_CZ.UTF-8' WHERE `l_code` = 'cs_CZ.UTF8';
+UPDATE `lang` SET `l_code` = 'en_US.UTF-8' WHERE `l_code` = 'en_US.UTF8';
+
+/* Russian traslation */
+INSERT INTO `lang` (`l_name`, `l_code`) VALUES ('Russian', 'ru_RU.UTF-8');
+
+/* fix scanAgents typo */
+update `scanAgents` set `name` = "localhost" WHERE `id` = 1;
+
+/* Add option to show custom field results as nested and show links default */
+ALTER TABLE `api` ADD `app_nest_custom_fields` TINYINT(1)  NULL  DEFAULT '0';
+ALTER TABLE `api` ADD `app_show_links` TINYINT(1)  NULL  DEFAULT '0';
+
+/* Add index to ctype for changelog */
+ALTER TABLE changelog ADD INDEX(ctype);
+
+/* extend sections for devices */
+ALTER TABLE `devices` CHANGE `sections` `sections` VARCHAR(1024)  CHARACTER SET utf8  NULL  DEFAULT NULL;
+
+/* chinese translation */
+INSERT INTO `lang` (`l_code`, `l_name`) VALUES ('zh_CN.UTF-8', 'Chinese');
+
+/* hostname extend */
+ALTER TABLE `devices` CHANGE `hostname` `hostname` VARCHAR(100)  CHARACTER SET utf8  NULL  DEFAULT NULL;
+/* decode mac addresses */
+ALTER TABLE `settings` ADD `decodeMAC` TINYINT(1)  NULL  DEFAULT '1';
+
+
+
+
+
+
+/* VERSION 1.31 */
+UPDATE `settings` set `version` = '1.31';
+
+/* reset db check field and donation */
+UPDATE `settings` set `dbverified` = 0;
+UPDATE `settings` set `donate` = 0;
+
+/* Circuits flag */
+ALTER TABLE `settings` ADD `enableCircuits` TINYINT(1)  NULL  DEFAULT '1';
+
+/* circuit providers */
+CREATE TABLE `circuitProviders` (
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(256) DEFAULT NULL,
+  `description` text,
+  `contact` varchar(128) DEFAULT '',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+/* circuits */
+CREATE TABLE `circuits` (
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `cid` varchar(128) DEFAULT NULL,
+  `provider` int(11) unsigned NOT NULL,
+  `type` enum('Default','Bandwidth') DEFAULT NULL,
+  `capacity` varchar(128) DEFAULT NULL,
+  `status` enum('Active','Inactive','Reserved') NOT NULL DEFAULT 'Active',
+  `device1` int(11) unsigned DEFAULT NULL,
+  `location1` int(11) unsigned DEFAULT NULL,
+  `device2` int(11) unsigned DEFAULT NULL,
+  `location2` int(11) unsigned DEFAULT NULL,
+  `comment` text,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `cid` (`cid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+/* Compact menu */
+ALTER TABLE `users` ADD `menuCompact` TINYINT  NULL  DEFAULT '1';
+
+/* Add line for rack displayin and back side */
+ALTER TABLE `racks` ADD `line` INT(11)  NOT NULL  DEFAULT '1';
+ALTER TABLE `racks` ADD `front` INT(11)  NOT NULL  DEFAULT '0';
+
+/* add circuit permissions for normal users */
+ALTER TABLE `users` ADD `editCircuits` SET('Yes','No')  NULL  DEFAULT 'No';
+
+/* Add option for DNS resolving host in subnet */
+ALTER TABLE `subnets` ADD `resolveDNS` TINYINT(1)  NULL  DEFAULT '0';
+
+/* Cahnge name for back side */
+ALTER TABLE `racks` CHANGE `front` `hasBack` TINYINT(1)  NOT NULL  DEFAULT '0';
+ALTER TABLE `racks` CHANGE `line` `row` INT(11)  NOT NULL  DEFAULT '1';
+
+/* add permission propagation policy */
+ALTER TABLE `settings` ADD `permissionPropagate` TINYINT(1)  NULL  DEFAULT '1';

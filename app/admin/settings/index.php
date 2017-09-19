@@ -118,6 +118,19 @@ $(document).ready(function() {
 	<td class="info2"><?php print _('Select default language'); ?></td>
 </tr>
 
+
+<!-- Policy propagation -->
+<tr>
+	<td class="title"><?php print _('Default permission propagation'); ?></td>
+	<td>
+		<input type="checkbox" class="input-switch" value="1" name="permissionPropagate" <?php if($settings['permissionPropagate'] == 1) print 'checked'; ?>>
+	</td>
+	<td class="info2">
+		<?php print _('Set subnet / section permission propagate button to on by default'); ?>
+	</td>
+</tr>
+
+
 <!-- Mex session duration -->
 <tr>
 	<td class="title"><?php print _('Inactivity timeout'); ?></td>
@@ -135,6 +148,7 @@ $(document).ready(function() {
 	</td>
 	<td class="info2"><?php print _('Select inactive timeout for user sessions. Please note that if default php session settings in php.ini are lower they will override this'); ?></td>
 </tr>
+
 <!-- Max VLAN number -->
 <tr>
 	<td class="title"><?php print _('Highest VLAN number'); ?></td>
@@ -143,6 +157,17 @@ $(document).ready(function() {
 	</td>
 	<td class="info2">
 		<?php print _('Set highest VLAN number (default 4096)'); ?>
+	</td>
+</tr>
+
+<!-- maintaneanceMode -->
+<tr>
+	<td class="title"><?php print _('Maintenance mode'); ?></td>
+	<td>
+		<input type="checkbox" class="input-switch" value="1" name="maintaneanceMode" <?php if($settings['maintaneanceMode'] == 1) print 'checked'; ?>>
+	</td>
+	<td class="info2">
+		<?php print _('Put phpipam to maintenance mode'); ?>
 	</td>
 </tr>
 
@@ -327,6 +352,17 @@ $(document).ready(function() {
 	</td>
 </tr>
 
+<!-- Circuits -->
+<tr>
+	<td class="title"><?php print _('Circuits module'); ?></td>
+	<td>
+		<input type="checkbox" class="input-switch" value="1" name="enableCircuits" <?php if($settings['enableCircuits'] == 1) print 'checked'; ?>>
+	</td>
+	<td class="info2">
+		<?php print _('Enable or disable Circuits module'); ?>
+	</td>
+</tr>
+
 <!-- Locations -->
 <tr>
 	<td class="title"><?php print _('Locations module'); ?></td>
@@ -412,6 +448,49 @@ $(document).ready(function() {
 	</td>
 </tr>
 
+<!-- Update Tags -->
+<tr>
+	<td class="title"><?php print _("Update Tags"); ?></td>
+	<td>
+		<input type="checkbox" class="input-switch" value="1" name="updateTags" <?php if($settings['updateTags'] == 1) print 'checked'; ?>>
+	</td>
+	<td class="info2">
+		<?php print _('Update address tags when address state change occurs'); ?>
+	</td>
+</tr>
+
+<!-- enforceUnique -->
+<tr>
+	<td class="title"><?php print _("Require unique subnets"); ?></td>
+	<td>
+		<input type="checkbox" class="input-switch" value="1" name="enforceUnique" <?php if($settings['enforceUnique'] == 1) print 'checked'; ?>>
+	</td>
+	<td class="info2">
+		<?php print _('Require unique subnets accross all sections'); ?>
+	</td>
+</tr>
+
+<!-- vlanDuplicate -->
+<tr>
+	<td class="title"><?php print _("Allow duplicate vlans"); ?></td>
+	<td>
+		<input type="checkbox" class="input-switch" value="1" name="vlanDuplicate" <?php if($settings['vlanDuplicate'] == 1) print 'checked'; ?>>
+	</td>
+	<td class="info2">
+		<?php print _('Allow duplicated vlans inside L2 domain'); ?>
+	</td>
+</tr>
+
+<!-- decode MAC -->
+<tr>
+	<td class="title"><?php print _("Decode MAC vendor"); ?></td>
+	<td>
+		<input type="checkbox" class="input-switch" value="1" name="decodeMAC" <?php if($settings['decodeMAC'] == 1) print 'checked'; ?>>
+	</td>
+	<td class="info2">
+		<?php print _('Decode MAC address vendor for addresses'); ?>
+	</td>
+</tr>
 
 
 <!-- ICPM -->

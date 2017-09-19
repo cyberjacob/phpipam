@@ -22,7 +22,7 @@ $Addresses	= new Addresses ($Database);
 $User->check_user_session();
 
 # create csrf token
-$csrf = $User->csrf_cookie ("create", "address");
+$csrf = $_POST['action']=="add"||$_POST['action']=="all-add" ? $User->csrf_cookie ("create", "address_add") : $User->csrf_cookie ("create", "address_".$_POST['id']);
 
 # validate action
 $Tools->validate_action ($_POST['action']);
@@ -53,7 +53,7 @@ $selected_ip_fields = explode(";", $selected_ip_fields);																			//for
 $custom_fields = $Tools->fetch_custom_fields ('ipaddresses');
 
 # if subnet is full we cannot any more ip addresses
-if (($action=="add" || $action=="all-add") && $subnet['isFull']==1)   $Result->show("warning", _("Cannot add address as subnet is market as used"), true, true);
+if (($action=="add" || $action=="all-add") && ($subnet['isFull']==1 && $subnet['isFolder']!=1))   $Result->show("warning", _("Cannot add address as subnet is market as used"), true, true);
 
 
 # if action is not add then fetch current details, otherwise fetch first available IP address
@@ -74,7 +74,6 @@ else {
 	// save old mac for multicast check
 	$address['mac_old'] = @$address['mac'];
 }
-
 
 # Set action and button text
 if ($action == "add") 			{ $btnName = _("add");		$act = "add"; }
@@ -434,7 +433,7 @@ function validate_mac (ip, mac, sectionId, vlanId, id) {
 	 	print '</tr>';
 
 		//remove all associated queries if delete
-		if ($_POST['action']=="delete") {
+		if ($_POST['action']=="delete" || $_POST['action']=="all-edit") {
     		// check
     		$PowerDNS = new PowerDNS ($Database);
     		$records  = $PowerDNS->search_records ("name", $address['dns_name'], 'name', true);
@@ -532,7 +531,7 @@ function validate_mac (ip, mac, sectionId, vlanId, id) {
 			if ($_POST['action']=="add")	{ $address[$field['name']] = $field['Default']; }
 
 			print '<tr>'. "\n";
-			print '	<td>'. $field['name'] .' '.$required.'</td>'. "\n";
+			print '	<td>'. $Tools->print_custom_field_name ($field['name']) .' '.$required.'</td>'. "\n";
 			print '	<td>'. "\n";
 
 			//set type
@@ -553,8 +552,8 @@ function validate_mac (ip, mac, sectionId, vlanId, id) {
 			elseif($field['type'] == "date" || $field['type'] == "datetime") {
 				// just for first
 				if($timeP==0) {
-					print '<link rel="stylesheet" type="text/css" href="css/1.2/bootstrap/bootstrap-datetimepicker.min.css">';
-					print '<script type="text/javascript" src="js/1.2/bootstrap-datetimepicker.min.js"></script>';
+					print '<link rel="stylesheet" type="text/css" href="css/'.SCRIPT_PREFIX.'/bootstrap/bootstrap-datetimepicker.min.css">';
+					print '<script type="text/javascript" src="js/'.SCRIPT_PREFIX.'/bootstrap-datetimepicker.min.js"></script>';
 					print '<script type="text/javascript">';
 					print '$(document).ready(function() {';
 					//date only
@@ -595,7 +594,15 @@ function validate_mac (ip, mac, sectionId, vlanId, id) {
 			}
 			//default - input field
 			else {
-				print ' <input type="text" class="ip_addr form-control input-sm" name="'. $field['nameNew'] .'" placeholder="'. $field['name'] .'" value="'. @$address[$field['name']]. '" size="30" '.$delete.' rel="tooltip" data-placement="right" title="'.$field['Comment'].'">'. "\n";
+                // max length
+                $maxlength = 0;
+                if(strpos($field['type'],"varchar")!==false) {
+                    $maxlength = str_replace(array("varchar","(",")"),"", $field['type']);
+                }
+                // fix maxlength=0
+                $maxlength = $maxlength==0 ? "" : $maxlength;
+                // print
+				print ' <input type="text" class="ip_addr form-control input-sm" name="'. $field['nameNew'] .'" placeholder="'. $field['name'] .'" value="'. $address[$field['name']]. '" size="30" rel="tooltip" data-placement="right" maxlength="'.$maxlength.'" title="'.$field['Comment'].'">'. "\n";
 			}
 
 			print '	</td>'. "\n";

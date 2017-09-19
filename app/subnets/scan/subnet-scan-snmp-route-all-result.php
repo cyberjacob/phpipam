@@ -35,6 +35,8 @@ foreach ($_POST as $k=>$p) {
     }
 }
 
+if(sizeof($_POST)>=ini_get("max_input_vars"))                           { $Result->show("danger", _("Number of discovered hosts exceed maximum possible defined by php.ini - set to ")." $max <hr>"._("Please adjust your php.ini settings for value `max_input_vars`"), true, false, false, true); }
+
 # scan disabled
 if ($User->settings->enableSNMP!="1")                           { $Result->show("danger", _("SNMP module disbled"), true); }
 
@@ -77,7 +79,7 @@ if (isset($subnets_all)) {
         # set new POST
         $_POST = $s;
         # create csrf token
-        $_POST['csrf_cookie'] = $User->csrf_cookie ("create", "subnet");
+        $_POST['csrf_cookie'] = $User->csrf_cookie ("create", "subnet_add");
         # permissions
         $subnet['permissions'] = $section->permissions;
         # check for master
@@ -93,5 +95,3 @@ if (isset($subnets_all)) {
     }
 }
 else { $Result->show("danger", "No subnets selected", true); }
-
-?>

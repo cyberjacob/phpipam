@@ -38,7 +38,7 @@ print "	<th>"._('Subnet')."</th>";
 # custom
 if(isset($visible_fields)) {
 foreach ($visible_fields as $f) {
-print "	<th class='hidden-xs hidden-sm hidden-md'>$f[name]</th>";
+print "	<th class='hidden-xs hidden-sm hidden-md'>".$Tools->print_custom_field_name ($f['name'])."</th>";
 }
 }
 print "	<th class='small hidden-xs hidden-sm hidden-md'>"._('Used')."</th>";
@@ -60,7 +60,7 @@ foreach ($slave_subnets as $slave_subnet) {
 		# if master start != first slave start print free space
 		if($subnet['subnet'] != $slave_subnet['subnet']) {
 			# calculate diff between subnet and slave
-			$diff = (int) gmp_strval(gmp_sub($slave_subnet['subnet'], $subnet['subnet']));
+			$diff = gmp_strval(gmp_sub($slave_subnet['subnet'], $subnet['subnet']));
 
 			print "<tr class='success'>";
 			print "	<td></td>";
@@ -155,7 +155,8 @@ foreach ($slave_subnets as $slave_subnet) {
 		# calculate next slave
 		$next_slave_subnet  = $slave_subnets[$m+1]->subnet;
 		# calculate diff
-		$diff = (int) gmp_strval(gmp_sub($next_slave_subnet, $current_slave_bcast));
+		$diff = gmp_strval(gmp_sub($next_slave_subnet, $current_slave_bcast));
+
 		# if diff print free space
 		if($diff>1) {
 

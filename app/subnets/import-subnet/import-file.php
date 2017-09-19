@@ -17,6 +17,8 @@ $Result 	= new Result;
 
 # verify that user is logged in
 $User->check_user_session();
+# check maintaneance mode
+$User->check_maintaneance_mode ();
 
 # permissions
 $permission = $Subnets->check_permission ($User->user, $_POST['subnetId']);
@@ -40,8 +42,9 @@ if($subnet===false)                $Result->show("danger", _("Invalid subnet ID"
 # Parse file
 $outFile = $Tools->parse_import_file ($filetype, $subnet, $custom_address_fields);
 
-# Fetch all devices
-$devices = $Tools->fetch_all_objects("devices", "hostname");
+# Fetch all devices and locations
+$devices   = $Tools->fetch_all_objects("devices", "hostname");
+$locations = $Tools->fetch_all_objects("locations", "id");
 
 # cnt
 $edit = 0;
@@ -73,29 +76,46 @@ foreach($outFile as $k=>$line) {
     		$line[7] = 0;
 		}
 
+		// reformat location from name to id
+		if(strlen($line[10])>0) {
+    		if ($locations!==false) {
+        		foreach($locations as $d) {
+        			if($d->name==$line[10])	{ $line[10] = $d->id; }
+        		}
+    		}
+    		else {
+        		$line[10] = 0;
+    		}
+		}
+		else {
+    		$line[10] = 0;
+		}
+
 		// set action
 		if($id = $Addresses->address_exists ($line[0], $_POST['subnetId'], false))	{ $action = "edit"; }
 		else																		{ $action = "add"; }
 
 		// set insert / update values
-		$address_insert = array("action"=>$action,
-								"subnetId"=>$_POST['subnetId'],
-								"ip_addr"=>$line[0],
-								"state"=>$Addresses->address_type_type_to_index($line[1]),
-								"description"=>$line[2],
-								"dns_name"=>$line[3],
-								"firewallAddressObject"=>$line[4],
-								"mac"=>$line[5],
-								"owner"=>$line[6],
-								"switch"=>$line[7],
-								"port"=>$line[8],
-								"note"=>$line[9]
+		$address_insert = array(
+								"action"                => $action,
+								"subnetId"              => $_POST['subnetId'],
+								"ip_addr"               => $line[0],
+								"state"                 => $Addresses->address_type_type_to_index($line[1]),
+								"description"           => $line[2],
+								"dns_name"              => $line[3],
+								"firewallAddressObject" => $line[4],
+								"mac"                   => $line[5],
+								"owner"                 => $line[6],
+								"switch"                => $line[7],
+								"port"                  => $line[8],
+								"note"                  => $line[9],
+								"location_item"         => $line[10]
 								);
 		// add id
 		if ($action=="edit")	{ $address_insert["id"] = $id; }
         // custom fields
         // Incorrect Value for $currIndex = 10;
-        $currIndex = 9;
+        $currIndex = 10;
         if(sizeof($custom_address_fields) > 0) {
         	foreach($custom_address_fields as $field) {
             	$currIndex++;
@@ -126,4 +146,3 @@ if($errors==0)	{
 $Result->show("success", _("Created $add addresses, skipped ".sizeof($invalid_lines)." entries and edited $edit addresses"), false);
 
 print "<br><br>";
-?>

@@ -251,13 +251,20 @@ abstract class DB {
 	 * @param array $values (default: array())
 	 * @return void
 	 */
-	public function runQuery($query, $values = array()) {
+	public function runQuery($query, $values = array(), &$rowCount = null) {
 		if (!$this->isConnected()) $this->connect();
 
-		$statement = $this->pdo->prepare($query);
 		//debuq
-		$this->log_query ($statement, $values);
-		return $statement->execute((array)$values); //this array cast allows single values to be used as the parameter
+		$this->log_query($statement, $values);
+
+		$result = null;
+
+		$statement = $this->pdo->prepare($query);
+		if (is_object($statement)) {
+			$result = $statement->execute((array)$values); //this array cast allows single values to be used as the parameter
+			$rowCount = $statement->rowCount();
+		}
+		return $result;
 	}
 
 	/**
@@ -362,6 +369,12 @@ abstract class DB {
 		$preparedParamArr = array();
 		foreach ($objParams as $objParam) {
 			$preparedParamArr[] = '`' . $this->escape($objParam) . '`=?';
+		}
+
+		// exit on no parameters
+		if(sizeof($preparedParamArr)==0) {
+			throw new Exception('No values to update');
+			return false;
 		}
 
 		$preparedParamStr = implode(',', $preparedParamArr);
@@ -698,7 +711,7 @@ abstract class DB {
 
         // subnets
         if ($table=="subnets" && $sortField=="subnet_int") {
-    		return $this->getObjectsQuery('SELECT '.$result_fields.',subnet*1 as subnet_int FROM `' . $table . '` WHERE `'. $field .'`'.$negate_operator. $operator .'? ORDER BY `'.$sortField.'` ' . ($sortAsc ? '' : 'DESC') . ';', array($value));
+    		return $this->getObjectsQuery('SELECT '.$result_fields.',CAST(subnet AS DECIMAL(39,0)) as subnet_int FROM `' . $table . '` WHERE `'. $field .'`'.$negate_operator. $operator .'? ORDER BY `'.$sortField.'` ' . ($sortAsc ? '' : 'DESC') . ';', array($value));
         }
         else {
     		return $this->getObjectsQuery('SELECT '.$result_fields.' FROM `' . $table . '` WHERE `'. $field .'`'.$negate_operator. $operator .'? ORDER BY `'.$sortField.'` ' . ($sortAsc ? '' : 'DESC') . ';', array($value));

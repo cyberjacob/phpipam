@@ -16,7 +16,9 @@ if(!$location) {
 if($location===false) {
     $Result->show("info","Invalid location", false);
 }
-else {
+elseif (!isset($gmaps_api_key) || strlen($gmaps_api_key)==0) {
+      $Result->show("info text-center nomargin", _("Location: Google Maps API key is unset. Please configure config.php \$gmaps_api_key to enable."));
+}else {
     // recode
     if (strlen($location->long)==0 && strlen($location->lat)==0 && strlen($location->address)>0) {
         $latlng = $Tools->get_latlng_from_address ($location->address);
@@ -34,8 +36,9 @@ else {
     # no long/lat
     if( (strlen($location->long)>0 && strlen($location->lat))) {
 
-    // description fix
-    $location->description = strlen($location->description)>0 ? "<span class=\'text-muted\'>$location->description</span>" : "";
+    // description and apostrophe fix
+    $location->description = strlen($location->description)>0 ? "<span class=\'text-muted\'>".addslashes($location->description)."</span>" : "";
+    $location->description = str_replace(array("\r\n","\n","\r"), "<br>", $location->description );
     ?>
     <script type="text/javascript">
         $(document).ready(function() {
@@ -49,11 +52,11 @@ else {
             });
 
             map.addMarker({
-             title: '<?php print $location->name; ?>',
+             title: "'<?php print $location->name; ?>'",
              lat: '<?php print $location->lat; ?>',
              lng: '<?php print $location->long; ?>',
              infoWindow: {
-                content: '<h5><a href="<?php print create_link("tools", "locations", $location->id); ?>."\'><?php print $location->name; ?></a></h5><?php print $location->description; ?>'
+                content: '<h5><a href="<?php print create_link("tools", "locations", $location->id); ?>."\'><?php print addslashes($location->name); ?></a></h5><?php print $location->description; ?>'
              }
             });
 

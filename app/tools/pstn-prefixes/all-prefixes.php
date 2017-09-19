@@ -1,8 +1,8 @@
-<h4><?php print _('List of PSTN prefixes'); ?></h4>
+ <h4><?php print _('List of PSTN prefixes'); ?></h4>
 <hr>
 
 <div class="btn-group">
-    <?php if($User->is_admin(false)) { ?>
+    <?php if($User->is_admin(false)||$User->user->pstn==3) { ?>
 	<a href="" class='btn btn-sm btn-default editPSTN' data-action='add' data-id='0' style='margin-bottom:10px;'><i class='fa fa-plus'></i> <?php print _('Add prefix'); ?></a>
 	<?php }?>
 </div>
@@ -42,7 +42,7 @@ else {
 	if(sizeof($custom) > 0) {
 		foreach($custom as $field) {
 			if(!in_array($field['name'], $hidden_custom_fields)) {
-				print "<th class='hidden-xs hidden-sm hidden-md'>$field[name]</th>";
+				print "<th class='hidden-xs hidden-sm hidden-md'>".$Tools->print_custom_field_name ($field['name'])."</th>";
 				$colspan++;
 			}
 		}
@@ -74,4 +74,3 @@ else {
     print "</tbody>";
     print "</table>";
 }
-?>

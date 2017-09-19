@@ -37,8 +37,8 @@ if($_POST['action']!="add") {
 }
 ?>
 
-<script type="text/javascript" src="js/1.2/bootstrap-colorpicker.min.js"></script>
-<link rel="stylesheet" type="text/css" href="css/1.2/bootstrap/bootstrap-colorpicker.min.css">
+<script type="text/javascript" src="js/<?php print SCRIPT_PREFIX; ?>/bootstrap-colorpicker.min.js"></script>
+<link rel="stylesheet" type="text/css" href="css/<?php print SCRIPT_PREFIX; ?>/bootstrap/bootstrap-colorpicker.min.css">
 <script type="text/javascript">
 $(function(){
     $('.select-bgcolor').colorpicker();
@@ -63,7 +63,7 @@ $(function(){
 	<tr>
 	    <td style="width:120px;"><?php print _('Type'); ?></td>
 	    <td>
-		    <input type="text" name="type" class="form-control input-sm"  value="<?php print @$tag->type; ?>"  maxlength='32' <?php if($_POST['action'] == "delete") print "readonly"; ?>>
+		    <input type="text" name="type" class="form-control input-sm"  value="<?php print $Admin->strip_xss(@$tag->type); ?>"  maxlength='32' <?php if($_POST['action'] == "delete") print "readonly"; ?>>
 			<input type="hidden" name="id" value="<?php print @$tag->id; ?>">
 			<input type="hidden" name="action" value="<?php print $_POST['action']; ?>">
 			<input type="hidden" name="csrf_cookie" value="<?php print $csrf; ?>">
@@ -74,7 +74,7 @@ $(function(){
 	<tr>
 	    <td style="white-space: nowrap;"><?php print _('Show tag'); ?></td>
 	    <td>
-		    <select name="showtag" class="form-control input-w-auto">
+		    <select name="showtag" class="form-control input-sm input-w-auto">
 			    <option value="0"><?php print _("No"); ?></option>
 			    <option value="1" <?php if(@$tag->showtag==1) { print "selected='selected'"; } ?>><?php print _("Yes"); ?></option>
 		    </select>
@@ -86,7 +86,7 @@ $(function(){
 	    <td><?php print _('Bg color'); ?></td>
 	    <td>
 		    <div class="input-group select-bgcolor">
-				<input type="text" name="bgcolor" class="form-control input-xs"  value="<?php print @$tag->bgcolor; ?>"  maxlength='32' <?php if($_POST['action'] == "delete") print "readonly"; ?>><span class="input-group-addon"><i></i></span>
+				<input type="text" name="bgcolor" class="form-control input-xs"  value="<?php print $Admin->strip_xss(@$tag->bgcolor); ?>"  maxlength='32' <?php if($_POST['action'] == "delete") print "readonly"; ?>><span class="input-group-addon"><i></i></span>
 		    </div>
 		</td>
     </tr>
@@ -96,7 +96,7 @@ $(function(){
 	    <td><?php print _('Fg color'); ?></td>
 	    <td>
 		    <div class="input-group select-fgcolor">
-			    <input type="text" name="fgcolor" class="form-control input-sm"  value="<?php print @$tag->fgcolor; ?>"  maxlength='32' <?php if($_POST['action'] == "delete") print "readonly"; ?>><span class="input-group-addon"><i></i></span>
+			    <input type="text" name="fgcolor" class="form-control input-sm"  value="<?php print $Admin->strip_xss(@$tag->fgcolor); ?>"  maxlength='32' <?php if($_POST['action'] == "delete") print "readonly"; ?>><span class="input-group-addon"><i></i></span>
 		    </div>
 		</td>
     </tr>
@@ -105,10 +105,27 @@ $(function(){
 	<tr>
 	    <td><?php print _('Compress range'); ?></td>
 	    <td>
-		    <select name="compress" class="form-control input-w-auto">
+		    <select name="compress" class="form-control input-sm input-w-auto">
 			    <option value="No"><?php print _("No"); ?></option>
 			    <option value="Yes" <?php if(@$tag->compress=="Yes") { print "selected='selected'"; } ?>><?php print _("Yes"); ?></option>
 		    </select>
+		</td>
+    </tr>
+
+	<!-- Update Tag -->
+	<tr>
+	    <td><?php print _('Update Tags'); ?></td>
+	    <td>
+		    <select name="updateTag" class="form-control input-sm input-w-auto">
+			    <option value="0"><?php print _("No"); ?></option>
+			    <option value="1" <?php if(@$tag->updateTag=="1") { print "selected='selected'"; } ?>><?php print _("Yes"); ?></option>
+		    </select>
+		</td>
+    </tr>
+	<tr>
+	    <td></td>
+	    <td>
+		    <span class="text-muted"><?php print _("Update address tag to online/offline if state change occurs. Combine with settings > Update Tags"); ?></span>
 		</td>
     </tr>
 

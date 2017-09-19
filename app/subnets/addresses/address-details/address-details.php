@@ -7,6 +7,10 @@
 # verify that user is logged in
 $User->check_user_session();
 
+# get subnet calculation
+$subnet_detailed = $Subnets->get_network_boundaries ($subnet['subnet'], $subnet['mask']);           //set network boundaries
+$gateway         = $Subnets->find_gateway($subnet['id']);
+$gateway_ip      = $gateway===false ? "" : $Subnets->transform_to_dotted($gateway->ip_addr);
 
 # check if it exists, otherwise print error
 if(sizeof($address)>1) {
@@ -27,11 +31,25 @@ if(sizeof($address)>1) {
     	print "	<td><strong>$address[ip]</strong></td>";
     	print "</tr>";
 
+        # mask
+        print "<tr>";
+        print " <th>"._('Netmask')."</th>";
+        print " <td>$subnet_detailed[netmask] (/$subnet[mask])</td>";
+        print "</tr>";
+
+        # gateway
+        print "<tr>";
+        print " <th>"._('Gateway')."</th>";
+        print " <td>$gateway_ip</td>";
+        print "</tr>";
+
     	# description
     	print "<tr>";
     	print "	<th>"._('Description')."</th>";
     	print "	<td>$address[description]</td>";
     	print "</tr>";
+
+        print "<tr><td></td><td><hr></td></tr>";
 
     	# hierarchy
     	print "<tr>";
@@ -97,9 +115,19 @@ if(sizeof($address)>1) {
 
     	# mac
     	if(in_array('mac', $selected_ip_fields)) {
+
+        // get MAC vendor
+        if($User->settings->decodeMAC=="1") {
+            $mac_vendor = $User->get_mac_address_vendor_details ($address['mac']);
+            $mac_vendor = $mac_vendor=="" ? : " <span class='text-muted'>(".$mac_vendor.")</span>";
+        }
+        else {
+            $mac_vendor = "";
+        }
+
     	print "<tr>";
     	print "	<th>"._('MAC address')."</th>";
-    	print "	<td>$address[mac]</td>";
+    	print "	<td>$address[mac]${mac_vendor}</td>";
     	print "</tr>";
     	}
 
@@ -222,7 +250,7 @@ if(sizeof($address)>1) {
     			if(strlen($address[$key])>0) {
     			$address[$key] = str_replace(array("\n", "\r\n"), "<br>",$address[$key]);
     			print "<tr>";
-    			print "	<th>$key</th>";
+    			print "	<th>".$Tools->print_custom_field_name ($key)."</th>";
     			print "	<td>";
     			#booleans
     			if($field['type']=="tinyint(1)")	{

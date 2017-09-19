@@ -51,7 +51,7 @@ $section  = (array) $Sections->fetch_section (null, @$_POST['sectionId']);
 		<tr>
 			<td><?php print _('Name'); ?></td>
 			<td colspan="2">
-				<input type="text" class='input-xlarge form-control input-sm input-w-250' name="name" value="<?php print @$section['name']; ?>" size="30" <?php if ($_POST['action'] == "delete" ) { print ' readonly '; } ?> placeholder="<?php print _('Section name'); ?>">
+				<input type="text" class='input-xlarge form-control input-sm input-w-250' name="name" value="<?php print $Admin->strip_xss(@$section['name']); ?>" size="30" <?php if ($_POST['action'] == "delete" ) { print ' readonly '; } ?> placeholder="<?php print _('Section name'); ?>">
 				<!-- hidden -->
 				<input type="hidden" name="action" 	value="<?php print $_POST['action']; ?>">
 				<input type="hidden" name="id" 		value="<?php print $_POST['sectionId']; ?>">
@@ -62,7 +62,7 @@ $section  = (array) $Sections->fetch_section (null, @$_POST['sectionId']);
 		<tr>
 			<td><?php print _('Description'); ?></td>
 			<td colspan="2">
-				<input type="text" class='input-xlarge form-control input-sm input-w-250' name="description" value="<?php print @$section['description']; ?>" size="30" <?php if ($_POST['action'] == "delete") { print " readonly ";}?> placeholder="<?php print _('Section description'); ?>">
+				<input type="text" class='input-xlarge form-control input-sm input-w-250' name="description" value="<?php print $Admin->strip_xss(@$section['description']); ?>" size="30" <?php if ($_POST['action'] == "delete") { print " readonly ";}?> placeholder="<?php print _('Section description'); ?>">
 			</td>
 		</tr>
 		<!-- Master Subnet -->
@@ -120,6 +120,18 @@ $section  = (array) $Sections->fetch_section (null, @$_POST['sectionId']);
 					<option value="0" <?php if(@$section['showVRF'] == "0") print "selected='selected'"; ?>><?php print _('No'); ?></option>
 				</select>
 				<span class="help-inline info2"><?php print _('Show list of VRFs and belonging subnets in subnet list'); ?></span>
+			</td>
+		</tr>
+
+		<!-- Show only supernets -->
+		<tr>
+			<td><?php print _('Show only supernets'); ?></td>
+			<td colspan="2">
+				<select name="showSupernetOnly" class="input-small form-control input-sm input-w-auto  pull-left" <?php if($_POST['action']=="delete") print 'disabled="disabled"'; ?>>
+					<option value="1"><?php print _('Yes'); ?></option>
+					<option value="0" <?php if(@$section['showSupernetOnly'] == "0") print "selected='selected'"; ?>><?php print _('No'); ?></option>
+				</select>
+				<span class="help-inline info2"><?php print _('Show only supernets in list of subnets in section'); ?></span>
 			</td>
 		</tr>
 
@@ -212,7 +224,8 @@ $section  = (array) $Sections->fetch_section (null, @$_POST['sectionId']);
 			<td><?php print _('Delegate'); ?></td>
 			<td colspan="2">
 			<div class="checkbox">
-				<input type="checkbox" name="delegate" class="input-switch" value="1" checked="checked">
+	        	<?php $checked = $User->settings->permissionPropagate=="1" ? "checked" : ""; ?>
+				<input type="checkbox" name="delegate" class="input-switch" value="1" <?php print $checked; ?>>
 			</div>
 			</td>
 		</tr>

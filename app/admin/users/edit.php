@@ -278,11 +278,11 @@ $(document).ready(function(){
 		<td colspan="3"><hr></td>
 	</tr>
 	<tr>
-    	<td><?php print _("VLANs"); ?></td>
+    	<td><?php print _("VLANs / VRFs"); ?></td>
     	<td>
             <input type="checkbox" class="input-switch" value="Yes" name="editVlan" <?php if($user['editVlan'] == "Yes") print 'checked'; ?>>
     	</td>
-		<td class="info2"><?php print _('Select to allow user to manage VLANs'); ?></td>
+		<td class="info2"><?php print _('Select to allow user to manage VLANs and VRFs'); ?></td>
 	</tr>
 
 	<!-- pdns -->
@@ -293,6 +293,17 @@ $(document).ready(function(){
             <input type="checkbox" class="input-switch" value="Yes" name="pdns" <?php if($user['pdns'] == "Yes") print 'checked'; ?>>
     	</td>
 		<td class="info2"><?php print _('Select to allow user to create DNS records'); ?></td>
+	</tr>
+    <?php } ?>
+
+	<!-- circuits -->
+    <?php if ($User->settings->enableCircuits==1) { ?>
+	<tr>
+    	<td><?php print _("Manage Circuits"); ?></td>
+    	<td>
+            <input type="checkbox" class="input-switch" value="Yes" name="editCircuits" <?php if($user['editCircuits'] == "Yes") print 'checked'; ?>>
+    	</td>
+		<td class="info2"><?php print _('Select to allow user to manage circuits'); ?></td>
 	</tr>
     <?php } ?>
 

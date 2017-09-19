@@ -19,12 +19,20 @@ $Result 	= new Result ();
 
 # verify that user is logged in
 $User->check_user_session();
+# check maintaneance mode
+$User->check_maintaneance_mode ();
 
 # strip input tags
 $_POST = $Admin->strip_input_tags($_POST);
 
 # validate csrf cookie
-$User->csrf_cookie ("validate", "folder", $_POST['csrf_cookie']) === false ? $Result->show("danger", _("Invalid CSRF cookie"), true) : "";
+# validate csrf cookie
+if($_POST['action']=="add") {
+	$User->csrf_cookie ("validate", "folder_add", $_POST['csrf_cookie']) === false ? $Result->show("danger", _("Invalid CSRF cookie"), true) : "";
+}
+else {
+	$User->csrf_cookie ("validate", "folder_".$_POST['subnetId'], $_POST['csrf_cookie']) === false ? $Result->show("danger", _("Invalid CSRF cookie"), true) : "";
+}
 
 # ID must be numeric
 if($_POST['action']=="add") {
@@ -138,20 +146,22 @@ if ($_POST['action']=="delete" && !isset($_POST['deleteconfirm'])) {
 else {
 
 	# create array of default update values
-	$values = array("id"=>@$_POST['subnetId'],
-					"isFolder"=>1,
-					"masterSubnetId"=>$_POST['masterSubnetId'],
-					"description"=>@$_POST['description'],
+	$values = array(
+					"id"             => @$_POST['subnetId'],
+					"isFolder"       => 1,
+					"masterSubnetId" => $_POST['masterSubnetId'],
+					"description"    => @$_POST['description'],
+					"isFull"         => @$_POST['isFull']
 					);
 	# for new subnets we add permissions
 	if($_POST['action']=="add") {
-		$values['permissions']=$_POST['permissions'];
-		$values['sectionId']=$_POST['sectionId'];
+		$values['permissions'] = $_POST['permissions'];
+		$values['sectionId']   = $_POST['sectionId'];
 	}
 	else {
 		# if section change
 		if(@$_POST['sectionId'] != @$_POST['sectionIdNew']) {
-			$values['sectionId']=$_POST['sectionIdNew'];
+			$values['sectionId'] = $_POST['sectionIdNew'];
 		}
 	}
 	# append custom fields

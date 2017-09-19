@@ -24,19 +24,17 @@ require( dirname(__FILE__) . '/controllers/Responses.php');			// exception, head
 
 # settings
 $enable_authentication = true;
-$time_response = true;          // adds [time] to response
-$lock_file = "";                // (optional) file to write lock to
+$time_response         = true;          // adds [time] to response
+$lock_file             = "";            // (optional) file to write lock to
 
-# database object
-$Database 	= new Database_PDO;
-$Tools	    = new Tools ($Database);
-
-# exceptions/result object
+# database and exceptions/result object
+$Database = new Database_PDO;
+$Tools    = new Tools ($Database);
 $Response = new Responses ();
 
 # get phpipam settings
 if(SETTINGS===null)
-$settings 	= $Tools->fetch_object ("settings", "id", 1);
+$settings = $Tools->fetch_object ("settings", "id", 1);
 
 # set empty controller for options
 if($_SERVER['REQUEST_METHOD']=="OPTIONS") {
@@ -45,10 +43,8 @@ if($_SERVER['REQUEST_METHOD']=="OPTIONS") {
 
 /* wrap in a try-catch block to catch exceptions */
 try {
-
 	// start measuring
 	$start = microtime(true);
-
 
 	/* Validate application ---------- */
 
@@ -73,8 +69,17 @@ try {
 	    	if (!in_array($extension, get_loaded_extensions()))
 	    													{ $Response->throw_exception(500, 'php extension '.$extension.' missing'); }
 		}
-		// decrypt request - to JSON
-		$params = json_decode(trim(mcrypt_decrypt(MCRYPT_RIJNDAEL_256, $app->app_code, base64_decode($_GET['enc_request']), MCRYPT_MODE_ECB)));
+		// decrypt request - form_encoded
+        if(strpos($_SERVER['CONTENT_TYPE'], "application/x-www-form-urlencoded")!==false) {
+        	$decoded = trim(mcrypt_decrypt(MCRYPT_RIJNDAEL_256, $app->app_code, base64_decode($_GET['enc_request']), MCRYPT_MODE_ECB));
+        	$decoded = $decoded[0]=="?" ? substr($decoded, 1) : $decoded;
+			parse_str($decoded, $params);
+			$params = (object) $params;
+        }
+        // json_encoded
+		else {
+			$params = json_decode(trim(mcrypt_decrypt(MCRYPT_RIJNDAEL_256, $app->app_code, base64_decode($_GET['enc_request']), MCRYPT_MODE_ECB)));
+		}
 	}
 	// SSL checks
 	elseif($app->app_security=="ssl") {
@@ -96,7 +101,7 @@ try {
 
 
 	// append POST parameters if POST or PATCH
-	if($_SERVER['REQUEST_METHOD']=="POST" || $_SERVER['REQUEST_METHOD']=="PATCH") {
+	if($_SERVER['REQUEST_METHOD']=="POST" || $_SERVER['REQUEST_METHOD']=="PATCH" || $_SERVER['REQUEST_METHOD']=="DELETE") {
 		// if application tupe is JSON (application/json)
         if(strpos($_SERVER['CONTENT_TYPE'], "application/json")!==false){
             $rawPostData = file_get_contents('php://input');
@@ -186,6 +191,17 @@ try {
 	// it the parameters from the request and Database object
 	$controller = new $controller($Database, $Tools, $params, $Response);
 
+	// pass app params for links result
+	$controller->app = $app;
+
+	// Unmarshal the custom_fields JSON object into the main object for
+	// POST and PATCH. This only works for controllers that support custom
+	// fields and if the app has nested custom fields enabled, otherwise
+	// this is skipped.
+	if (strtoupper($_SERVER['REQUEST_METHOD']) == 'POST' || strtoupper($_SERVER['REQUEST_METHOD']) == 'PATCH') {
+		$controller->unmarshal_nested_custom_fields();
+	}
+
 	// check if the action exists in the controller. if not, throw an exception.
 	if( method_exists($controller, strtolower($_SERVER['REQUEST_METHOD'])) === false ) {
 		$Response->throw_exception(501, $Response->errors[501]);
@@ -225,7 +241,6 @@ try {
 } catch ( Exception $e ) {
 	// catch any exceptions and report the problem
 	$result = $e->getMessage();
-	$Response->result['success'] = 0;
 
 	// set flag if it came from Result, just to be sure
 	if($Response->exception!==true) {
@@ -252,7 +267,7 @@ if($time_response) {
 }
 
 //output result
-echo $Response->formulate_result ($result, $time);
+echo $Response->formulate_result ($result, $time, $app->app_nest_custom_fields, $controller->custom_fields);
 
 // exit
 exit();

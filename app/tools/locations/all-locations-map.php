@@ -28,6 +28,9 @@ $User->check_user_session();
 if ($User->settings->enableLocations!="1") {
     $Result->show("danger", _("Locations module disabled."), false);
 }
+elseif ($User->settings->enableLocations=="1" && (!isset($gmaps_api_key) || strlen($gmaps_api_key)==0)) {
+    $Result->show("info text-center nomargin", _("Location: Google Maps API key is unset. Please configure config.php \$gmaps_api_key to enable."));
+}
 else {
     # fetch all locations
     $all_locations = $Tools->fetch_all_objects("locations", "name");
@@ -80,15 +83,16 @@ else {
                     <?php
                     $html = array();
                     foreach ($all_locations as $location) {
-                        // description fix
-                        $location->description = strlen($location->description)>0 ? "<span class=\'text-muted\'>$location->description</span>" : "";
+                        // description and apostrophe fix
+                        $location->description = strlen($location->description)>0 ? "<span class=\'text-muted\'>".addslashes($location->description)."</span>" : "";
+                        $location->description = str_replace(array("\r\n","\n","\r"), "<br>", $location->description );
 
                         $html[] = "map.addMarker({";
-                        $html[] = " title: '$location->name',";
+                        $html[] = " title: \"$location->name\",";
                         $html[] = " lat: '$location->lat',";
                         $html[] = " lng: '$location->long',";
                         $html[] = " infoWindow: {";
-                        $html[] = "    content: '<h5><a href=\'".create_link("tools", "locations", $location->id)."\'>$location->name</a></h5>$location->description'";
+                        $html[] = "    content: '<h5><a href=\'".create_link("tools", "locations", $location->id)."\'>". addslashes($location->name) ."</a></h5>$location->description'";
                         $html[] = "}";
                         $html[] = "});";
                     }
@@ -130,4 +134,3 @@ else {
     </script>
     <?php
 }
-?>

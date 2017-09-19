@@ -92,7 +92,7 @@ else {
             			// create links
             			$location->{$key} = $Result->create_links($location->{$key});
             			print "<tr>";
-            			print "	<th>$key</th>";
+            			print "	<th>".$Tools->print_custom_field_name ($key)."</th>";
             			print "	<td style='vertical-align:top;align:left;'>".$location->{$key}."</td>";
             			print "</tr>";
             		}
@@ -149,19 +149,20 @@ else {
                             	if($o->type=="devices")     { $href = create_link("tools", "devices", $o->id); }
                             	elseif($o->type=="subnets") { $href = create_link("subnets", $o->sectionId, $o->id); }
                             	elseif($o->type=="addresses") { $href = create_link("subnets", $subnet->sectionId, $subnet->id, "address-details", $o->id); }
+                                elseif($o->type=="circuit") { $href = create_link("tools", "circuits", $o->id); }
                             	else                        { $href = create_link("tools", "racks", $o->id); }
 
                             	// description
                             	$o->description = strlen($o->description)>0 ? " <span class='text-muted'>($o->description)</span>" : "";
 
                             	// subnet name
-                            	if ($o->type=="subnets")    $o->name = $Tools->transform_address ($o->name,"dotted").".".$o->mask;
+                            	if ($o->type=="subnets")    $o->name = $Tools->transform_address ($o->name,"dotted")."/".$o->mask;
 
                             	// to ip
                             	if($o->type=="addresses")
                             	$o->name = $Tools->transform_address ($o->name, "dotted");
 
-                                print "<a class='btn btn-xs btn-danger removeLocationObject' data-object-id='$o->id' rel='tooltip' title='"._("Remove")."'><i class='fa fa-times'></i></a> ";
+                                print "<a class='btn btn-xs btn-default removeLocationObject' data-object-id='$o->id' rel='tooltip' title='"._("Remove")."'><i class='fa fa-times'></i></a> ";
                                 print "<a href='$href'>$o->name</a> $o->description";
                                 print "<br>";
                         	}
