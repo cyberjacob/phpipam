@@ -39,7 +39,8 @@ CREATE TABLE `ipaddresses` (
   `editDate` TIMESTAMP  NULL  ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `sid_ip_unique` (`ip_addr`,`subnetId`),
-  KEY `subnetid` (`subnetId`)
+  KEY `subnetid` (`subnetId`),
+  KEY `location` (`location`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /* insert default values */
 INSERT INTO `ipaddresses` (`id`, `subnetId`, `ip_addr`, `description`, `dns_name`, `state`)
@@ -250,7 +251,8 @@ CREATE TABLE `subnets` (
   `editDate` TIMESTAMP  NULL  ON UPDATE CURRENT_TIMESTAMP,
   `lastScan` TIMESTAMP  NULL,
   `lastDiscovery` TIMESTAMP  NULL,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  KEY `location` (`location`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /* insert default values */
 INSERT INTO `subnets` (`id`, `subnet`, `mask`, `sectionId`, `description`, `vrfId`, `masterSubnetId`, `allowRequests`, `vlanId`, `showName`, `permissions`, `isFolder`)
@@ -275,17 +277,25 @@ CREATE TABLE `devices` (
   `description` varchar(256) DEFAULT NULL,
   `sections` varchar(1024) DEFAULT NULL,
   `snmp_community` varchar(100) DEFAULT NULL,
-  `snmp_version` set('0','1','2') DEFAULT '0',
+  `snmp_version` set('0','1','2','3') DEFAULT '0',
   `snmp_port` mediumint(5) unsigned DEFAULT '161',
-  `snmp_timeout` mediumint(5) unsigned DEFAULT '1000000',
-  `snmp_queries` VARCHAR(128)  NULL  DEFAULT NULL,
-  `rack` int(11) unsigned NULL DEFAULT null,
-  `rack_start` int(11) unsigned DEFAULT null,
-  `rack_size` int(11) unsigned DEFAULT null,
-  `location` INT(11)  unsigned  NULL  DEFAULT NULL,
+  `snmp_timeout` mediumint(5) unsigned DEFAULT '500',
+  `snmp_queries` varchar(128) DEFAULT NULL,
+  `snmp_v3_sec_level` set('none','noAuthNoPriv','authNoPriv','authPriv') DEFAULT 'none',
+  `snmp_v3_auth_protocol` set('none','MD5','SHA') DEFAULT 'none',
+  `snmp_v3_auth_pass` varchar(64) DEFAULT NULL,
+  `snmp_v3_priv_protocol` set('none','DES','AES') DEFAULT 'none',
+  `snmp_v3_priv_pass` varchar(64) DEFAULT NULL,
+  `snmp_v3_ctx_name` varchar(64) DEFAULT NULL,
+  `snmp_v3_ctx_engine_id` varchar(64) DEFAULT NULL,
+  `rack` int(11) unsigned DEFAULT NULL,
+  `rack_start` int(11) unsigned DEFAULT NULL,
+  `rack_size` int(11) unsigned DEFAULT NULL,
+  `location` int(11) unsigned DEFAULT NULL,
   `editDate` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  KEY `hostname` (`hostname`)
+  KEY `hostname` (`hostname`),
+  KEY `location` (`location`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
@@ -711,7 +721,8 @@ CREATE TABLE `racks` (
   `row` INT(11)  NOT NULL  DEFAULT '1',
   `hasBack` TINYINT(1)  NOT NULL  DEFAULT '0',
   `description` text,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  KEY `location` (`location`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
@@ -795,6 +806,8 @@ CREATE TABLE `circuits` (
   `location2` int(11) unsigned DEFAULT NULL,
   `comment` text,
   PRIMARY KEY (`id`),
+  KEY `location1` (`location1`),
+  KEY `location2` (`location2`),
   UNIQUE KEY `cid` (`cid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 

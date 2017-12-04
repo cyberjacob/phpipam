@@ -946,7 +946,7 @@ class Tools extends Common_functions {
 	 * @return bool
 	 */
 	public function verify_widget ($file) {
-		return file_exists("app/dashboard/widgets/$file.php")==false ? false : true;
+		return file_exists(dirname(__FILE__)."/../../app/dashboard/widgets/$file.php")||file_exists(dirname(__FILE__)."/../../app/dashboard/widgets/custom/$file.php") ? true : false;
 	}
 
 
@@ -1278,7 +1278,7 @@ class Tools extends Common_functions {
 				foreach($fields[$table] as $field) {
 					//if it doesnt exist store error
 					if(!$this->field_exists($table, $field)) {
-						$error['fieldError'][$table] = $field;
+						$error['fieldError'][$table][] = $field;
 					}
 				}
 			}
@@ -1333,7 +1333,7 @@ class Tools extends Common_functions {
 		try { $count = $this->Database->getObjectQuery($query); }
 		catch (Exception $e) { $this->Result->show("danger", $e->getMessage(), true);	return false; }
 		# return true if it exists
-		return sizeof($count)>0 ? true : false;
+		return ($count !== null && sizeof($count) > 0 ? true : false);
 	}
 
 	/**
@@ -1581,59 +1581,16 @@ class Tools extends Common_functions {
 	 */
 
 	/**
-	 * Check for latest version
+	 * Check for latest version on gitHub
 	 *
 	 * @access public
 	 * @param bool $print_error (default: false)
-	 * @return mixed|bool
+	 * @return string|bool
 	 */
 	public function check_latest_phpipam_version ($print_error = false) {
 		# fetch settings
 		$this->get_settings ();
 		# check for release
-		return $this->settings->version >= "1.2" ? $this->check_latest_phpipam_version_github ($print_error) : $this->check_latest_phpipam_version_phpipamnet ($print_error);
-	}
-
-	/**
-	 * Checks for latest phpipam version from phpipam webpage
-	 *
-	 * @access private
-	 * @param bool $print_error (default: false)
-	 * @return string|false
-	 */
-	private function check_latest_phpipam_version_phpipamnet ($print_error = false) {
-    	# default false
-    	$version = false;
-		# fetch webpage
-		$handle = @fopen("http://phpipam.net/phpipamversion.php", "r");
-		if($handle) {
-			while (!feof($handle)) {
-				$version = fgets($handle);
-			}
-			fclose($handle);
-		}
-		else {
-        	if($print_error) {
-            	$this->Result->show("danger", "http://phpipam.net/phpipamversion.php", false);
-            }
-            return false;
-		}
-
-		# replace dots for check
-		$versionT = str_replace(".", "", $version);
-
-		# return version or false
-		return is_numeric($versionT) ? $version : false;
-	}
-
-	/**
-	 * Fetch latest version form Github for phpipam > 1.2
-	 *
-	 * @access private
-	 * @param bool $print_error (default: false)
-	 * @return mixed|bool
-	 */
-	private function check_latest_phpipam_version_github ($print_error = false) {
     	# try to fetch
     	$release_gh = @file('https://github.com/phpipam/phpipam/releases.atom');
     	# check
@@ -1657,7 +1614,7 @@ class Tools extends Common_functions {
 			// check for latest release
 			foreach ($json->entry as $e) {
 				// releases will be named with numberic values
-				if (is_numeric(str_replace("Version", "", $e->title))) {
+				if (is_numeric(str_replace(array("Version", "."), "", $e->title))) {
 					// save
 					$this->phpipam_latest_release = $e;
 					// return
@@ -2289,6 +2246,50 @@ class Tools extends Common_functions {
 	}
 
 	/**
+	 * Fetch parents recursive - generic function
+	 *
+	 * Fetches all parents for specific table in id / parent relations
+	 *
+	 * It will return array, keys will be id's and values as defined in return_field
+	 *
+	 * @param string $table
+	 * @param string $parent_field
+	 * @param string $return_field
+	 * @param int $false
+	 * @param bool $reverse (default: true)
+	 *
+	 * @return array
+	 */
+	public function fetch_parents_recursive ($table, $parent_field, $return_field, $id, $reverse = false) {
+		$parents = array();
+		$root = false;
+
+		while($root === false) {
+			$subd = $this->fetch_object($table, "id", $id);
+
+			if($subd!==false) {
+    			$subd = (array) $subd;
+				# not root yet
+				if(@$subd[$parent_field]!=0) {
+					// array_unshift($parents, $subd[$parent_field]);
+					$parents[$subd['id']] = $subd[$return_field];
+					$id  = $subd[$parent_field];
+				}
+				# root
+				else {
+					$parents[$subd['id']] = $subd[$return_field];
+					$root = true;
+				}
+			}
+			else {
+				$root = true;
+			}
+		}
+		# return array
+		return $reverse ? array_reverse($parents, truetrue) :$parents;
+	}
+
+	/**
 	 * Checks for duplicate number.
 	 *
 	 * @access public
@@ -2778,6 +2779,7 @@ class Tools extends Common_functions {
     public function fetch_location_objects ($id = false, $count = false) {
         // check
         if(is_numeric($id)) {
+            $id = $this->Database->escape ($id);
             // count ?
             $select = $count ? "count(*) as cnt " : "*";
             // query
@@ -2787,36 +2789,47 @@ class Tools extends Common_functions {
                         FROM devices d
                         JOIN locations l
                         ON d.location = l.id
+                        WHERE l.id = $id
+
                         UNION ALL
                         SELECT r.id, r.name, '' as mask, 'racks' as type, '' as sectionId, r.location, r.description
                         FROM racks r
                         JOIN locations l
                         ON r.location = l.id
+                        WHERE l.id = $id
+
                         UNION ALL
                         SELECT s.id, s.subnet as name, s.mask, 'subnets' as type, s.sectionId, s.location, s.description
                         FROM subnets s
                         JOIN locations l
                         ON s.location = l.id
+                        WHERE l.id = $id
+
                         UNION ALL
                         SELECT a.id, a.ip_addr as name, 'mask', 'addresses' as type, a.subnetId as sectionId, a.location, a.dns_name as description
                         FROM ipaddresses a
                         JOIN locations l
                         ON a.location = l.id
+                        WHERE l.id = $id
+
                         UNION ALL
                         SELECT c.id, c.cid as name, 'mask', 'circuit' as type, 'none' as sectionId, c.location2, 'none' as description
                         FROM circuits c
                         JOIN locations l
                         ON c.location1 = l.id
+                        WHERE l.id = $id
+
                         UNION ALL
                         SELECT c.id, c.cid as name, 'mask', 'circuit' as type, 'none' as sectionId, c.location2, '' as description
                         FROM circuits c
                         JOIN locations l
                         ON c.location2 = l.id
+                        WHERE l.id = $id
                         )
-                        as linked where location = ?;";
+                        as linked;";
 
      		// fetch
-    		try { $objects = $this->Database->getObjectsQuery($query, array($id)); }
+    		try { $objects = $this->Database->getObjectsQuery($query); }
     		catch (Exception $e) { $this->Result->show("danger", $e->getMessage(), true); }
 
     		// return
@@ -2859,7 +2872,7 @@ class Tools extends Common_functions {
 		if(is_array($custom_circuit_fields)) {
 			if(sizeof($custom_circuit_fields)>0) {
 				foreach ($custom_circuit_fields as $f) {
-					$query[] = ",c.".$f['name'];
+					$query[] = ",c.`".$f['name']."`";
 				}
 			}
 		}

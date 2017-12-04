@@ -220,11 +220,11 @@ class Common_functions  {
 				return false;
 			}
 			# save to cache array
-			if(sizeof($res)>0) {
-    			// set identifier
-    			$method = $this->cache_set_identifier ($table);
-    			// save
-    			$this->cache_write ($table, $res->{$method}, $res);
+			if($res !== null && sizeof($res)>0) {
+				// set identifier
+				$method = $this->cache_set_identifier ($table);
+				// save
+				$this->cache_write ($table, $res->{$method}, $res);
 				return $res;
 			}
 			else {
@@ -812,13 +812,18 @@ class Common_functions  {
 		}
 		// reverse proxy doing SSL offloading
         elseif(isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https') {
-        	$url = "https://$_SERVER[HTTP_X_FORWARDED_HOST]";
+            if (isset($_SERVER[HTTP_X_FORWARDED_HOST])) {
+                $url = "https://$_SERVER[HTTP_X_FORWARDED_HOST]";
+            }
+            else {
+                $url = "https://$_SERVER[HTTP_HOST]";
+            }
         }
 		elseif(isset($_SERVER['HTTP_X_SECURE_REQUEST'])  && $_SERVER['HTTP_X_SECURE_REQUEST'] == 'true') {
 			$url = "https://$_SERVER[SERVER_NAME]";
 		}
 		// custom port
-		elseif($_SERVER['SERVER_PORT']!="80") {
+		elseif($_SERVER['SERVER_PORT']!="80" && (isset($_SERVER['HTTP_X_FORWARDED_PORT']) && $_SERVER['HTTP_X_FORWARDED_PORT']!="80")) {
 			$url = "http://$_SERVER[SERVER_NAME]:$_SERVER[SERVER_PORT]";
 		}
 		// normal http
@@ -873,7 +878,8 @@ class Common_functions  {
 		        "split",
 		        "resize",
 		        "move",
-		        "remove"
+		        "remove",
+		        "assign"
 		      );
 	}
 
@@ -900,7 +906,7 @@ class Common_functions  {
 	 * @return bool
 	 */
 	public function validate_email($email) {
-	    return preg_match("/([\w\-]+\@[\w\-]+\.[\w\-]+)/",$email) ? true : false;
+		return filter_var($email, FILTER_VALIDATE_EMAIL);
 	}
 
 	/**
@@ -1135,13 +1141,20 @@ class Common_functions  {
 	 * @return array
 	 */
 	public function get_latlng_from_address ($address) {
+		// get config
+		include(dirname(__FILE__)."/../../config.php");
         // replace spaces
         $address = str_replace(' ','+',$address);
-        // get grocode
-        $geocode=file_get_contents('https://maps.google.com/maps/api/geocode/json?address='.$address.'&sensor=false');
+        // get geocode
+        if(isset($gmaps_api_geocode_key)) {
+	        $geocode=file_get_contents('https://maps.google.com/maps/api/geocode/json?address='.$address.'&sensor=false&key='.$gmaps_api_geocode_key);
+    	}
+    	else {
+	        $geocode=file_get_contents('https://maps.google.com/maps/api/geocode/json?address='.$address.'&sensor=false');
+    	}
         $output= json_decode($geocode);
         // return result
-        return array("lat"=>str_replace(",", ".", $output->results[0]->geometry->location->lat), "lng"=>str_replace(",", ".", $output->results[0]->geometry->location->lng));
+        return array("lat"=>str_replace(",", ".", $output->results[0]->geometry->location->lat), "lng"=>str_replace(",", ".", $output->results[0]->geometry->location->lng), "error"=>$output->error_message);
 	}
 
     /**
@@ -1230,7 +1243,8 @@ class Common_functions  {
     public function create_custom_field_input_set_enum ($field, $object, $disabled_text) {
 		$html = array();
     	//parse values
-    	$tmp = substr($field['type'], 0,3)=="set" ? explode(",", str_replace(array("set(", ")", "'"), "", $field['type'])) : explode(",", str_replace(array("enum(", ")", "'"), "", $field['type']));
+    	$field['type'] = trim(substr($field['type'],0,-1));
+    	$tmp = substr($field['type'], 0,3)=="set" ? explode(",", str_replace(array("set(", "'"), "", $field['type'])) : explode(",", str_replace(array("enum(", "'"), "", $field['type']));
     	//null
     	if($field['Null']!="NO") { array_unshift($tmp, ""); }
 

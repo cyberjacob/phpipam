@@ -752,14 +752,17 @@ class Common_api_functions {
 		// exceptions
 		if($controller=="vlans") 	{ $this->keys['vlanId'] = "id"; }
 		if($controller=="vrfs")  	{ $this->keys['vrfId'] = "id"; }
+		if($controller=="circuits") { $this->keys['cid'] = "circuit_id"; }
 		if($controller=="l2domains"){ $this->keys['permissions'] = "sections"; }
 		if($this->_params->controller=="tools" && $this->_params->id=="deviceTypes")  { $this->keys['tid'] = "id"; }
 		if($this->_params->controller=="tools" && $this->_params->id=="nameservers")  { $this->keys['permissions'] = "sections"; }
+		if($this->_params->controller=="subnets" )  								  { $this->keys['ip'] = "ip_addr"; }
 
 		// special keys for POST / PATCH
 		if ($_SERVER['REQUEST_METHOD']=="POST" || $_SERVER['REQUEST_METHOD']=="PATCH") {
 		if($this->_params->controller=="tools" && $this->_params->id=="devices")  	  { $this->keys['hostname'] = "dns_name"; }
 		if($this->_params->controller=="devices" )  	  							  { $this->keys['hostname'] = "dns_name"; }
+		if($this->_params->controller=="circuits")   								  { $this->keys['cid'] 		= "circuit_id"; }
 		}
 
 		// POST / PATCH

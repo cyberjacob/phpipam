@@ -1,3 +1,4 @@
+
 /**
  *
  * Javascript / jQuery functions
@@ -117,6 +118,8 @@ function showPopup(pClass, data, secondary) {
     $(oclass+' .'+pClass).fadeIn('fast');
     //disable page scrolling on bottom
     $('body').addClass('stop-scrolling');
+    // resize
+    resize_pContent ()
 }
 function hidePopup(pClass, secondary) {
 	// secondary - load secondary popupoverlay
@@ -176,6 +179,20 @@ function randomPass() {
     return pass;
 }
 
+// on load
+resize_pContent ()
+// on resize
+$(window).resize(function () {
+    resize_pContent ()
+});
+
+function resize_pContent () {
+    if($(".popup .pContent").is(":visible")) {
+        var myheight = $(window).height() - 250;
+        $(".popup .pContent").css('max-height', myheight);
+    }
+}
+
 /* remove self on click */
 $(document).on("click", ".selfDestruct", function() {
 	$(this).parent('div').fadeOut('fast');
@@ -219,7 +236,7 @@ if(readCookie('table-page-size')==null) { def_size = 25; }
 else                                    { def_size = readCookie('table-page-size'); }
 
 
-// table
+//table
 $('table.sorted').bdt({
    pageRowCount: def_size,
    searchFormClass: 'form-inline pull-right searchFormClass',
@@ -231,6 +248,37 @@ $('table.sorted-left').bdt({
    divClass: 'text-left clearfix'
 });
 $('table.sorted').stickyTableHeaders();
+
+
+$('table.sorted-new')
+                 .attr("data-toggle", "table")
+                 .attr('data-pagination', 'true')
+                 .attr('data-page-size', '50')
+                 .attr('data-page-list', '[25,50,100,250,500]')
+                 .attr('data-search','true')
+                 .attr('data-classes','table-no-bordered')
+                 .attr('data-icon-size','sm')
+                 .attr('data-show-footer','false')
+                 .attr('data-show-columns','true')
+                 .attr('data-icons-prefix','fa')
+                 .attr('data-show-toggle','true')
+                 .attr('data-icons','icons')
+                 .attr('data-cookie','true');
+
+$('table.sorted-new-notoggle')
+                 .attr('data-show-toggle','false')
+
+$('table.sorted-new-nocolumns')
+                 .attr('data-show-columns','false')
+
+// icons
+window.icons = {
+    refresh : 'fa-refresh',
+    toggle  : 'fa-toggle-on',
+    columns : 'fa-th-list'
+};
+
+
 $("li.disabled a").click(function () {
    return false;
 });
@@ -357,7 +405,11 @@ if($('#dashboard').length>0) {
 		$.post('app/dashboard/widgets/'+w+'.php', function(data) {
 			$("#w-"+w+' .hContent').html(data);
 		}).fail(function(xhr, textStatus, errorThrown) {
-			$("#w-"+w+' .hContent').html('<blockquote style="margin-top:20px;margin-left:20px;">File not found!</blockquote>');
+            $.post('app/dashboard/widgets/custom/'+w+'.php', function(data) {
+                $("#w-"+w+' .hContent').html(data);
+            }).fail(function(xhr, textStatus, errorThrown) {
+    			$("#w-"+w+' .hContent').html('<blockquote style="margin-top:20px;margin-left:20px;">File not found!</blockquote>');
+            })
 		});
 	});
 }
@@ -996,7 +1048,7 @@ function search_execute (loc) {
     //go to search page
     var prettyLinks = $('#prettyLinks').html();
 	if(prettyLinks=="Yes")	{ window.location = base + "tools/search/"+ip; }
-	else					{ window.location = base + "?page=tools&section=search&ip="+ip; }
+	else					{ window.location = base + "index.php?page=tools&section=search&ip="+ip; }
 }
 //submit form - topmenu
 $('.searchSubmit').click(function () {
@@ -1016,7 +1068,7 @@ $('form#search').submit(function () {
 // search ipaddress override
 $('a.search_ipaddress').click(function() {
     // set cookie json-encoded with parameters
-    createCookie("search_parameters",'{"addresses":"on","subnets":"off","vlans":"off","vrf":"off"}',365);
+    createCookie("search_parameters",'{"addresses":"on","subnets":"off","vlans":"off","vrf":"off","pstn":"off","circuits":"off"}',365);
 });
 
 //show/hide search select fields
@@ -1046,7 +1098,7 @@ $('#hosts').submit(function() {
 
     var prettyLinks = $('#prettyLinks').html();
 	if(prettyLinks=="Yes")	{ window.location = base + "tools/hosts/" + hostname; }
-	else					{ window.location = base + "?page=tools&section=hosts&ip=" + hostname; }
+	else					{ window.location = base + "index.php?page=tools&section=hosts&ip=" + hostname; }
     return false;
 });
 
@@ -1078,7 +1130,7 @@ $('form#cform').submit(function () {
     //update search page
     var prettyLinks = $('#prettyLinks').html();
 	if(prettyLinks=="Yes")	{ window.location = "tools/changelog/"+filter+"/"+limit+"/"; }
-	else					{ window.location = "?page=tools&section=changelog&subnetId="+filter+"&sPage="+limit; }
+	else					{ window.location = "index.php?page=tools&section=changelog&subnetId="+filter+"&sPage="+limit; }
     return false;
 });
 
@@ -1988,7 +2040,7 @@ $(document).on("click", ".editSubnetSubmit, .editSubnetSubmitDelete", function()
 					    //go to search page
 					    var prettyLinks = $('#prettyLinks').html();
 						if(prettyLinks=="Yes")	{ setTimeout(function (){window.location = base + "subnets/"+section_id_new+"/"+subnet_id_new+"/";}, 1500); }
-						else					{ setTimeout(function (){window.location = base + "?page=subnets&section="+section_id_new+"&subnetId="+subnet_id_new;}, 1500); }
+						else					{ setTimeout(function (){window.location = base + "index.php?page=subnets&section="+section_id_new+"&subnetId="+subnet_id_new;}, 1500); }
 		            }
 		            else {
 		            	setTimeout(function (){window.location.reload();}, 1500);
@@ -2212,7 +2264,7 @@ $('.vlansearchsubmit').click(function() {
     //go to search page
     var prettyLinks = $('#prettyLinks').html();
 	if(prettyLinks=="Yes")	{ setTimeout(function (){window.location = base + "subnets/"+section_id_new+"/"+subnet_id_new+"/";}, 1500); }
-	else					{ setTimeout(function (){window.location = base + "?page=subnets&section="+section_id_new+"&subnetId="+subnet_id_new;}, 1500); }	return false;
+	else					{ setTimeout(function (){window.location = base + "index.php?page=subnets&section="+section_id_new+"&subnetId="+subnet_id_new;}, 1500); }	return false;
 });
 
 
@@ -2371,10 +2423,6 @@ $(document).on("click", "#editDevTypeSubmit", function() {
 //load edit form
 $(document).on("click", ".editRack", function() {
 	open_popup("400", "app/admin/racks/edit.php", {rackid:$(this).attr('data-rackid'), action:$(this).attr('data-action')} );	return false;
-});
-//submit form
-$(document).on("click", "#editRacksubmit", function() {
-    submit_popup_data (".rackManagementEditResult", "app/admin/racks/edit-result.php", $('form#rackManagementEdit').serialize());
 });
 //load edit rack devices form
 $(document).on("click", ".editRackDevice", function() {

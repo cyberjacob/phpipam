@@ -1,4 +1,9 @@
 /* VERSION 1.1 */
+
+/* Old version only had a VARCHAR(32) password */
+
+ALTER TABLE `users` MODIFY COLUMN `password` CHAR(128) COLLATE utf8_bin DEFAULT NULL ;
+
 /* VERSION 1.11 */
 UPDATE `settings` set `version` = '1.11';
 
@@ -860,3 +865,23 @@ ALTER TABLE `racks` CHANGE `line` `row` INT(11)  NOT NULL  DEFAULT '1';
 
 /* add permission propagation policy */
 ALTER TABLE `settings` ADD `permissionPropagate` TINYINT(1)  NULL  DEFAULT '1';
+
+/* extend log details */
+ALTER TABLE `logs` CHANGE `details` `details` TEXT  CHARACTER SET utf8  COLLATE utf8_general_ci  NULL;
+
+/* snmpv3 */
+ALTER TABLE `devices` ADD `snmp_v3_sec_level` SET('none','noAuthNoPriv','authNoPriv','authPriv')  NULL  DEFAULT 'none';
+ALTER TABLE `devices` ADD `snmp_v3_auth_protocol` SET('none','MD5','SHA')  NULL  DEFAULT 'none';
+ALTER TABLE `devices` ADD `snmp_v3_auth_pass` VARCHAR(64)  NULL  DEFAULT NULL;
+ALTER TABLE `devices` ADD `snmp_v3_priv_protocol` SET('none','DES','AES')  NULL  DEFAULT 'none';
+ALTER TABLE `devices` ADD `snmp_v3_priv_pass` VARCHAR(64)  NULL  DEFAULT NULL;
+ALTER TABLE `devices` ADD `snmp_v3_ctx_name` VARCHAR(64)  NULL  DEFAULT NULL;
+ALTER TABLE `devices` ADD `snmp_v3_ctx_engine_id` VARCHAR(64)  NULL  DEFAULT NULL;
+
+/* add indexes to locations */
+ALTER TABLE `devices` ADD INDEX (`location`);
+ALTER TABLE `racks` ADD INDEX (`location`);
+ALTER TABLE `subnets` ADD INDEX (`location`);
+ALTER TABLE `ipaddresses` ADD INDEX (`location`);
+ALTER TABLE `circuits` ADD INDEX (`location1`);
+ALTER TABLE `circuits` ADD INDEX (`location2`);

@@ -27,7 +27,7 @@ if(!defined('BASE')) {
 }
 
 // Fix JSON_UNESCAPED_UNICODE for PHP 5.3
-defined('JSON_UNESCAPED_UNICODE') or define('JSON_UNESCAPED_UNICODE', 256);	
+defined('JSON_UNESCAPED_UNICODE') or define('JSON_UNESCAPED_UNICODE', 256);
 
 /* @classes ---------------------- */
 require( dirname(__FILE__) . '/classes/class.Common.php' );		//Class common - common functions
@@ -49,6 +49,7 @@ require( dirname(__FILE__) . '/classes/class.Mail.php' );		//Class for Mailing
 require( dirname(__FILE__) . '/classes/class.Rackspace.php' );	//Class for Racks
 require( dirname(__FILE__) . '/classes/class.SNMP.php' );	    //Class for SNMP queries
 require( dirname(__FILE__) . '/classes/class.DHCP.php' );	    //Class for DHCP
+require( dirname(__FILE__) . '/classes/class.Rewrite.php' );	    //Class for DHCP
 
 # save settings to constant
 if(@$_GET['page']!="install" ) {
@@ -59,12 +60,17 @@ if(@$_GET['page']!="install" ) {
 	catch (Exception $e) { $settings = false; }
 	if ($settings!==false) {
 		if (phpversion() < "5.4") {
-			define(SETTINGS, json_encode($settings));
-		}else{
-			define(SETTINGS, json_encode($settings, JSON_UNESCAPED_UNICODE));
+			define('SETTINGS', json_encode($settings));
+		}
+		else{
+			define('SETTINGS', json_encode($settings, JSON_UNESCAPED_UNICODE));
 		}
 	}
 }
+
+# create default GET parameters
+$Rewrite = new Rewrite ();
+$_GET = $Rewrite->get_url_params ();
 
 /**
  * create links function
@@ -101,13 +107,13 @@ function create_link ($l0 = null, $l1 = null, $l2 = null, $l3 = null, $l4 = null
 	}
 	# normal
 	else {
-		if(!is_null($l6))		{ $link = "?$el[0]=$l0&$el[1]=$l1&$el[2]=$l2&$el[3]=$l3&$el[4]=$l4&$el[5]=$l5&$el[6]=$l6"; }
-		elseif(!is_null($l5))	{ $link = "?$el[0]=$l0&$el[1]=$l1&$el[2]=$l2&$el[3]=$l3&$el[4]=$l4&$el[5]=$l5"; }
-		elseif(!is_null($l4))	{ $link = "?$el[0]=$l0&$el[1]=$l1&$el[2]=$l2&$el[3]=$l3&$el[4]=$l4"; }
-		elseif(!is_null($l3))	{ $link = "?$el[0]=$l0&$el[1]=$l1&$el[2]=$l2&$el[3]=$l3"; }
-		elseif(!is_null($l2))	{ $link = "?$el[0]=$l0&$el[1]=$l1&$el[2]=$l2"; }
-		elseif(!is_null($l1))	{ $link = "?$el[0]=$l0&$el[1]=$l1"; }
-		elseif(!is_null($l0))	{ $link = "?$el[0]=$l0"; }
+		if(!is_null($l6))		{ $link = "index.php?$el[0]=$l0&$el[1]=$l1&$el[2]=$l2&$el[3]=$l3&$el[4]=$l4&$el[5]=$l5&$el[6]=$l6"; }
+		elseif(!is_null($l5))	{ $link = "index.php?$el[0]=$l0&$el[1]=$l1&$el[2]=$l2&$el[3]=$l3&$el[4]=$l4&$el[5]=$l5"; }
+		elseif(!is_null($l4))	{ $link = "index.php?$el[0]=$l0&$el[1]=$l1&$el[2]=$l2&$el[3]=$l3&$el[4]=$l4"; }
+		elseif(!is_null($l3))	{ $link = "index.php?$el[0]=$l0&$el[1]=$l1&$el[2]=$l2&$el[3]=$l3"; }
+		elseif(!is_null($l2))	{ $link = "index.php?$el[0]=$l0&$el[1]=$l1&$el[2]=$l2"; }
+		elseif(!is_null($l1))	{ $link = "index.php?$el[0]=$l0&$el[1]=$l1"; }
+		elseif(!is_null($l0))	{ $link = "index.php?$el[0]=$l0"; }
 		else					{ $link = ""; }
 	}
 	# prepend base

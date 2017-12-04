@@ -17,13 +17,17 @@
  *
  */
 
-# include funtions
+# include functions
+if(!function_exists("create_link"))
 require( dirname(__FILE__) . '/../functions/functions.php');		// functions and objects from phpipam
+
+# include common API controllers
 require( dirname(__FILE__) . '/controllers/Common.php');			// common methods
 require( dirname(__FILE__) . '/controllers/Responses.php');			// exception, header and response handling
 
 # settings
 $enable_authentication = true;
+$aes_compliant_crypt   = false;         // Default to false for backward compatibility. Use true to use AES-256 compliant RIJNDAEL algorythm (rijndael-128)
 $time_response         = true;          // adds [time] to response
 $lock_file             = "";            // (optional) file to write lock to
 
@@ -71,7 +75,7 @@ try {
 		}
 		// decrypt request - form_encoded
         if(strpos($_SERVER['CONTENT_TYPE'], "application/x-www-form-urlencoded")!==false) {
-        	$decoded = trim(mcrypt_decrypt(MCRYPT_RIJNDAEL_256, $app->app_code, base64_decode($_GET['enc_request']), MCRYPT_MODE_ECB));
+        	$decoded = trim(mcrypt_decrypt($aes_compliant_crypt?MCRYPT_RIJNDAEL_128:MCRYPT_RIJNDAEL_256, $app->app_code, base64_decode($_GET['enc_request']), MCRYPT_MODE_ECB));
         	$decoded = $decoded[0]=="?" ? substr($decoded, 1) : $decoded;
 			parse_str($decoded, $params);
 			$params = (object) $params;
@@ -271,5 +275,3 @@ echo $Response->formulate_result ($result, $time, $app->app_nest_custom_fields, 
 
 // exit
 exit();
-
-?>
