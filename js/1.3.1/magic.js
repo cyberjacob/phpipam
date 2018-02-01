@@ -593,7 +593,7 @@ $(document).on("click", "#refreshHostname", function() {
     var subnetId  = $(this).attr('data-subnetId');;
     $.post('app/subnets/addresses/address-resolve.php', {ipaddress:ipaddress, subnetId: subnetId}, function(data) {
         if(data.length !== 0) {
-            $('input[name=dns_name]').val(data);
+            $('input[name=hostname]').val(data);
         }
         hideSpinner();
     }).fail(function(jqxhr, textStatus, errorThrown) { showError(jqxhr.statusText + "<br>Status: " + textStatus + "<br>Error: "+errorThrown); });
@@ -2127,6 +2127,7 @@ $(document).on("click", ".dropdown-subnets li a", function() {
 	var inputfield = $('form#editSubnetDetails input[name=subnet]');
 	// fill
 	$(inputfield).val(subnet);
+	$(inputfield).change();
 	// hide
 	$('.dropdown-subnets').parent().removeClass("open");	return false;
 });
@@ -2711,21 +2712,6 @@ $(document).on("submit", "form#asImport", function() {
         $('div.ripeImportResult').html(data).slideDown('fast');
         //hide after 2 seconds
         if(data.search("alert-danger")==-1 && data.search("error")==-1)     { $('table.asImport').delay(1000).fadeOut('fast'); hideSpinner(); }
-        else                             { hideSpinner(); }
-    }).fail(function(jqxhr, textStatus, errorThrown) { showError(jqxhr.statusText + "<br>Status: " + textStatus + "<br>Error: "+errorThrown); });
-    return false;
-});
-
-
-/*    set selected IP fields
-********************************/
-$('button#filterIPSave').click(function() {
-    showSpinner();
-    var addata = $('form#filterIP').serialize();
-    $.post('app/admin/filter-fields/filter-result.php', addata, function(data) {
-        $('div.filterIPResult').html(data).slideDown('fast');
-        //reload after 2 seconds if succeeded!
-        if(data.search("alert-danger")==-1 && data.search("error")==-1)     { $('div.filterIPResult').delay(2000).fadeOut('slow');    hideSpinner(); }
         else                             { hideSpinner(); }
     }).fail(function(jqxhr, textStatus, errorThrown) { showError(jqxhr.statusText + "<br>Status: " + textStatus + "<br>Error: "+errorThrown); });
     return false;
